@@ -26,7 +26,6 @@ jobs:
     - name: Check Code Quality (Format)
       run: |
         make format
-        # On vérifie s'il y a des changements (si black a modifié des fichiers, le CI doit échouer ou warn)
         git diff --exit-code || (echo "❌ Code not formatted. Run 'make format' locally." && exit 1)
 
     - name: Check Code Quality (Lint)
@@ -37,12 +36,25 @@ jobs:
       run: |
         python tests/check_env.py
 
+    - name: Build Test Data (Collect & Index)
+      env:
+        # On utilise une clé dummy si le secret n'est pas là, le collecteur utilisera le mode public
+        OPENAGENDA_API_KEY: ${{ secrets.OPENAGENDA_API_KEY }}
+        MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+      run: |
+        # 1. Collecte (crée data/raw_events.json)
+        python src/collector.py
+        # 2. Processing (crée data/processed_events.json)
+        python src/processor.py
+        # 3. Vectorisation (crée data/faiss_index)
+        # Si pas de clé Mistral, ça utilisera SentenceTransformers (local)
+        python src/core/vectorstore.py
+
     - name: Run Tests
       env:
         MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
         OPENAGENDA_API_KEY: ${{ secrets.OPENAGENDA_API_KEY }}
       run: |
-        # Création d'un .env temporaire pour les tests
         echo "MISTRAL_API_KEY=$MISTRAL_API_KEY" > .env
         make test
 
