@@ -17,6 +17,12 @@ run:
 view:
 	grip docs/ -b
 
+docker-build:
+	docker build -t culture-ia .
+
+docker-run:
+	docker run -p 8000:8000 --env-file .env culture-ia
+
 save-brain:
 	@echo "🧠 Sauvegarde Stealth vers Guesdon-Brain..."
 	@mkdir -p "/Users/daminou/Dev/Guesdon-Brain/Formation IA/Projet 7/culture-ia"

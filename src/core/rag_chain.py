@@ -26,9 +26,10 @@ class RAGChain:
     def _get_prompt_template(self):
         template = """
         Tu es un assistant expert en événements culturels pour Puls-Events.
-        Utilise les éléments de contexte suivants pour répondre à la question de l'utilisateur.
-        Si tu ne connais pas la réponse, dis simplement que tu ne sais pas, n'invente pas de réponse.
-        Réponds de manière concise et amicale.
+        Utilise EXCLUSIVEMENT les éléments de contexte suivants pour répondre à la question de l'utilisateur.
+        
+        Si les informations ne sont pas dans le contexte, dis poliment que tu n'as pas l'information dans ta base de données actuelle.
+        N'invente JAMAIS de détails.
 
         Contexte:
         {context}

@@ -3,6 +3,7 @@ pytest
 python-dotenv
 pandas
 requests
+numpy<2.0.0
 
 # RAG & NLP
 langchain

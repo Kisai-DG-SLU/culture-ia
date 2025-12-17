@@ -6,6 +6,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_mistralai import MistralAIEmbeddings
 from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 load_dotenv()
 
@@ -43,7 +44,16 @@ class VectorStoreManager:
             print("No documents to index.")
             return
 
-        vectorstore = FAISS.from_documents(documents, self.embeddings)
+        # Découpage en chunks pour gérer les textes longs
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            length_function=len,
+        )
+        split_docs = text_splitter.split_documents(documents)
+        print(f"Split {len(documents)} events into {len(split_docs)} chunks.")
+
+        vectorstore = FAISS.from_documents(split_docs, self.embeddings)
         vectorstore.save_local(self.index_path)
         print(f"Index created and saved to {self.index_path}")
 

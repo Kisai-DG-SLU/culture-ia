@@ -46,12 +46,19 @@ culture-ia/
    ```
 
 2. **Installer les dépendances** :
+   Le projet utilise un environnement virtuel Python 3.10 géré via un `Makefile`.
    ```bash
    make install
    ```
 
-3. **Configurer les variables d'environnement** :
-   Copiez le fichier `.env.template` en `.env` et remplissez vos clés API :
+3. **Vérifier l'environnement** :
+   Lancez le script de validation des imports critiques (Faiss, LangChain, Mistral) :
+   ```bash
+   .venv/bin/python tests/check_env.py
+   ```
+
+4. **Configurer les variables d'environnement** :
+   Copiez le fichier `.env.template` en `.env` (ce fichier est ignoré par Git) et remplissez vos clés API :
    ```bash
    cp .env.template .env
    ```

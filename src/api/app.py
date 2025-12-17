@@ -26,6 +26,9 @@ def read_root():
 
 @app.post("/ask", response_model=Response)
 def ask_question(query: Query):
+    if not query.question or not query.question.strip():
+        raise HTTPException(status_code=400, detail="La question ne peut pas être vide.")
+
     if rag_chain is None:
         raise HTTPException(status_code=503, detail="RAG Chain not initialized. Please rebuild index.")
     

@@ -21,6 +21,10 @@ ENV PYTHONPATH=/app
 # Expose port
 EXPOSE 8000
 
+# Copy entrypoint script and make it executable
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
 # Command to run the application
-CMD ["python", "src/main.py"]
+CMD ["./entrypoint.sh"]
 

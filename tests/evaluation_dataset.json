@@ -10,5 +10,9 @@
     {
         "question": "Quelle est la durée de l'initiation avec Adeline ?",
         "ground_truth": "L'initiation avec Adeline dure 2 heures."
+    },
+    {
+        "question": "Quel est le programme du cinéma Grand Rex ?",
+        "ground_truth": "Je n'ai pas l'information dans ma base de données actuelle."
     }
 ]
