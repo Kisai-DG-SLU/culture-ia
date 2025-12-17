@@ -22,4 +22,4 @@ save-brain:
 	@mkdir -p "/Users/daminou/Dev/Guesdon-Brain/Formation IA/Projet 7/culture-ia"
 	@cp GEMINI.md "/Users/daminou/Dev/Guesdon-Brain/Formation IA/Projet 7/culture-ia/" 2>/dev/null || true
 	@cp -r specs/ "/Users/daminou/Dev/Guesdon-Brain/Formation IA/Projet 7/culture-ia/specs/" 2>/dev/null || true
-	@cd "/Users/daminou/Dev/Guesdon-Brain" && git add . && git commit -m "Backup: culture-ia" && git push origin master && echo "✅ Brain Synced!"
+	@cd "/Users/daminou/Dev/Guesdon-Brain" && git add . && git commit -m "Backup: culture-ia" && git push origin main && echo "✅ Brain Synced!"
