@@ -1,0 +1,22 @@
+# Core
+pytest
+python-dotenv
+pandas
+requests
+
+# RAG & NLP
+langchain
+langchain-community
+langchain-mistralai
+faiss-cpu
+mistralai
+sentence-transformers
+tiktoken
+
+# API
+fastapi
+uvicorn
+httpx
+
+# Evaluation
+ragas

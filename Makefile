@@ -1,13 +1,18 @@
 .PHONY: install test run view save-brain
 
+VENV = .venv
+PYTHON = $(VENV)/bin/python
+PIP = $(VENV)/bin/pip
+PYTEST = $(VENV)/bin/pytest
+
 install:
-	pip install -r requirements.txt
+	$(PIP) install -r requirements.txt
 
 test:
-	pytest tests/
+	PYTHONPATH=. $(PYTEST) tests/
 
 run:
-	python src/main.py
+	$(PYTHON) src/main.py
 
 view:
 	grip docs/ -b

@@ -1,0 +1,14 @@
+[
+    {
+        "question": "Quels sont les événements sur la cuisine sauvage ?",
+        "ground_truth": "Il y a deux événements principaux : une balade découverte et cuisine sauvage au Bois de Vincennes organisée par Natalia (4h30), et une introduction aux plantes sauvages à Vincennes organisée par Adeline (2h)."
+    },
+    {
+        "question": "Où se déroule l'atelier de Natalia ?",
+        "ground_truth": "L'atelier de Natalia se déroule au Bois de Vincennes pour la balade, puis dans une cuisine à Vincennes à deux pas du métro Ligne 1."
+    },
+    {
+        "question": "Quelle est la durée de l'initiation avec Adeline ?",
+        "ground_truth": "L'initiation avec Adeline dure 2 heures."
+    }
+]
