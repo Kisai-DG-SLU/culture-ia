@@ -38,11 +38,12 @@ jobs:
 
     - name: Build Test Data (Collect & Index)
       env:
-        # On utilise une clé dummy si le secret n'est pas là, le collecteur utilisera le mode public
-        OPENAGENDA_API_KEY: ${{ secrets.OPENAGENDA_API_KEY }}
+        # On force le mode Mock pour garantir d'avoir des données pour les tests
+        MOCK_DATA: "true"
+        # On utilise une clé dummy si le secret n'est pas là
         MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
       run: |
-        # 1. Collecte (crée data/raw_events.json)
+        # 1. Collecte (crée data/raw_events.json avec des données mockées)
         python src/collector.py
         # 2. Processing (crée data/processed_events.json)
         python src/processor.py

@@ -18,6 +18,29 @@ class OpenAgendaCollector:
         Fetch events from OpenAgenda.
         Uses legacy JSON export if no API key is provided for public agendas.
         """
+        # Mode Mock pour la CI/Tests (si activé)
+        if os.getenv("MOCK_DATA") == "true":
+            print("⚠️ Mode Mock activé : Génération d'événements factices.")
+            now = datetime.now(timezone.utc)
+            return [
+                {
+                    "uid": 999999,
+                    "title": {"fr": "Atelier Cuisine Sauvage Mock"},
+                    "description": {"fr": "Un événement factice pour les tests."},
+                    "location": {
+                        "name": "Bois de Vincennes",
+                        "address": "Paris",
+                        "city": "Paris",
+                        "postalCode": "75012",
+                    },
+                    "timings": [
+                        {"begin": now.isoformat(), "end": (now + timedelta(days=1)).isoformat()}
+                    ],
+                    "keywords": {"fr": ["cuisine", "sauvage"]},
+                    "canonicalUrl": "http://mock.url",
+                }
+            ]
+
         if self.api_key:
             # V2 API
             url = f"https://api.openagenda.com/v2/agendas/{self.agenda_uid}/events"
