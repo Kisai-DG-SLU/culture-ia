@@ -34,7 +34,10 @@ class OpenAgendaCollector:
                         "postalCode": "75012",
                     },
                     "timings": [
-                        {"begin": now.isoformat(), "end": (now + timedelta(days=1)).isoformat()}
+                        {
+                            "begin": now.isoformat(),
+                            "end": (now + timedelta(days=1)).isoformat(),
+                        }
                     ],
                     "keywords": {"fr": ["cuisine", "sauvage"]},
                     "canonicalUrl": "http://mock.url",
