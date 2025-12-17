@@ -1,5 +1,6 @@
 import os
 import json
+from dotenv import load_dotenv
 from datasets import Dataset
 from ragas import evaluate
 from ragas.metrics import (
@@ -10,10 +11,9 @@ from ragas.metrics import (
 )
 from langchain_mistralai import ChatMistralAI, MistralAIEmbeddings
 from src.core.rag_chain import RAGChain
-from src.core.vectorstore import VectorStoreManager
-from dotenv import load_dotenv
 
 load_dotenv()
+
 
 class RAGEvaluator:
     def __init__(self):
@@ -33,14 +33,14 @@ class RAGEvaluator:
 
         for item in test_data:
             question = item["question"]
-            
+
             # For simplicity, I'll manually retrieve context here for evaluation dataset
             retriever = self.rag_chain.vectorstore.as_retriever(search_kwargs={"k": 3})
             docs = retriever.invoke(question)
             context = [doc.page_content for doc in docs]
-            
+
             answer = self.rag_chain.ask(question)
-            
+
             questions.append(question)
             answers.append(answer)
             contexts.append(context)
@@ -50,14 +50,14 @@ class RAGEvaluator:
             "user_input": questions,
             "response": answers,
             "retrieved_contexts": contexts,
-            "reference": ground_truths
+            "reference": ground_truths,
         }
         return Dataset.from_dict(data)
 
     def run_evaluation(self, test_file="tests/evaluation_dataset.json"):
         print("Preparing evaluation dataset...")
         dataset = self.prepare_dataset(test_file)
-        
+
         print("Running Ragas evaluation...")
         result = evaluate(
             dataset=dataset,
@@ -68,12 +68,12 @@ class RAGEvaluator:
                 context_precision,
             ],
             llm=self.llm,
-            embeddings=self.embeddings
+            embeddings=self.embeddings,
         )
-        
+
         print("\nEvaluation results:")
         print(result)
-        
+
         # Save results
         output_file = "data/evaluation_results.json"
         with open(output_file, "w", encoding="utf-8") as f:
@@ -81,6 +81,7 @@ class RAGEvaluator:
             json.dump(dict(result), f, ensure_ascii=False, indent=4)
         print(f"Results saved to {output_file}")
         return result
+
 
 if __name__ == "__main__":
     evaluator = RAGEvaluator()

@@ -8,13 +8,14 @@ from src.core.vectorstore import VectorStoreManager
 
 load_dotenv()
 
+
 class RAGChain:
     def __init__(self):
         self.vectorstore_manager = VectorStoreManager()
         self.vectorstore = self.vectorstore_manager.load_index()
         if self.vectorstore is None:
             raise ValueError("Vector store not found. Please run vectorstore.py first.")
-        
+
         self.llm = self._init_llm()
         self.prompt = self._get_prompt_template()
         self.chain = self._build_chain()
@@ -45,9 +46,12 @@ class RAGChain:
 
     def _build_chain(self):
         retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
-        
+
         chain = (
-            {"context": retriever | self._format_docs, "question": RunnablePassthrough()}
+            {
+                "context": retriever | self._format_docs,
+                "question": RunnablePassthrough(),
+            }
             | self.prompt
             | self.llm
             | StrOutputParser()
@@ -56,6 +60,7 @@ class RAGChain:
 
     def ask(self, query: str):
         return self.chain.invoke(query)
+
 
 if __name__ == "__main__":
     rag = RAGChain()

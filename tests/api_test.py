@@ -3,6 +3,7 @@ from src.api.app import app
 
 client = TestClient(app)
 
+
 def test_api_functional_scenario():
     print("🚀 Démarrage du test fonctionnel API...")
 
@@ -27,10 +28,11 @@ def test_api_functional_scenario():
     # Note: On ne teste pas le rebuild complet ici pour éviter de casser l'index en prod/test
     # Mais on vérifie que la route existe
     print("3. Vérification route rebuild...")
-    # On utilise un mock ou on suppose que ça marche, ici on check juste 405 si on fait GET au lieu de POST
+    # On utilise un mock ou on suppose que ça marche, ici on check juste 405 si on fait GET
     # ou on fait un vrai appel si on est sûr. Pour ce script, on skip le rebuild lourd.
-    
+
     print("🎉 Tous les tests fonctionnels sont passés !")
+
 
 if __name__ == "__main__":
     test_api_functional_scenario()

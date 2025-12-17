@@ -21,21 +21,28 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        make install
+
+    - name: Check Code Quality (Format)
+      run: |
+        make format
+        # On vérifie s'il y a des changements (si black a modifié des fichiers, le CI doit échouer ou warn)
+        git diff --exit-code || (echo "❌ Code not formatted. Run 'make format' locally." && exit 1)
+
+    - name: Check Code Quality (Lint)
+      run: |
+        make lint || echo "⚠️ Linting issues found (non-blocking for now)"
 
     - name: Run Environment Check
       run: |
         python tests/check_env.py
 
     - name: Run Tests
-      # On passe les variables d'environnement nécessaires pour les tests
-      # Si MISTRAL_API_KEY n'est pas défini, les tests qui l'utilisent (RAG) 
-      # utiliseront le fallback SentenceTransformers ou devront être skippés.
       env:
         MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
         OPENAGENDA_API_KEY: ${{ secrets.OPENAGENDA_API_KEY }}
       run: |
-        # Création d'un .env temporaire pour les tests si besoin
+        # Création d'un .env temporaire pour les tests
         echo "MISTRAL_API_KEY=$MISTRAL_API_KEY" > .env
         make test
 

@@ -1,15 +1,32 @@
-.PHONY: install test run view save-brain
+.PHONY: install test run view save-brain docker-build docker-run lint format
 
-VENV = .venv
-PYTHON = $(VENV)/bin/python
-PIP = $(VENV)/bin/pip
-PYTEST = $(VENV)/bin/pytest
+# Détection de l'environnement : utilise .venv si présent, sinon python système
+VENV_EXISTS := $(shell [ -d .venv ] && echo 1 || echo 0)
+ifeq ($(VENV_EXISTS), 1)
+    PYTHON = .venv/bin/python
+    PIP = .venv/bin/pip
+    PYTEST = .venv/bin/pytest
+    BLACK = .venv/bin/black
+    PYLINT = .venv/bin/pylint
+else
+    PYTHON = python
+    PIP = pip
+    PYTEST = pytest
+    BLACK = black
+    PYLINT = pylint
+endif
 
 install:
 	$(PIP) install -r requirements.txt
 
 test:
 	PYTHONPATH=. $(PYTEST) tests/
+
+lint:
+	$(PYLINT) src/ tests/ --disable=C0111,C0103,R0903
+
+format:
+	$(BLACK) src/ tests/
 
 run:
 	$(PYTHON) src/main.py

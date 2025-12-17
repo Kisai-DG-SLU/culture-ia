@@ -4,6 +4,8 @@ python-dotenv
 pandas
 requests
 numpy<2.0.0
+black
+pylint
 
 # RAG & NLP
 langchain

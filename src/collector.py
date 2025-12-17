@@ -1,10 +1,11 @@
 import os
 import json
+from datetime import datetime, timedelta, timezone
 import requests
-from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
+
 
 class OpenAgendaCollector:
     def __init__(self, api_key=None, agenda_uid=None):
@@ -14,19 +15,19 @@ class OpenAgendaCollector:
 
     def fetch_events(self):
         """
-        Fetch events from OpenAgenda. 
+        Fetch events from OpenAgenda.
         Uses legacy JSON export if no API key is provided for public agendas.
         """
         if self.api_key:
             # V2 API
             url = f"https://api.openagenda.com/v2/agendas/{self.agenda_uid}/events"
             params = {"key": self.api_key}
-            response = requests.get(url, params=params)
+            response = requests.get(url, params=params, timeout=10)
         else:
             # Legacy JSON export (public)
             url = f"{self.base_url}/{self.agenda_uid}/events.json"
-            response = requests.get(url)
-        
+            response = requests.get(url, timeout=10)
+
         response.raise_for_status()
         data = response.json()
         return data.get("events", [])
@@ -35,11 +36,10 @@ class OpenAgendaCollector:
         """
         Filter events that occurred within the last 'days' days or are in the future.
         """
-        recent_events = []
+        filtered_events = []
         # Use timezone-aware UTC now for comparison
-        from datetime import timezone
         limit_date = datetime.now(timezone.utc) - timedelta(days=days)
-        
+
         for event in events:
             # In OpenAgenda JSON export, timings is a list of {begin, end}
             timings = event.get("timings", [])
@@ -47,27 +47,30 @@ class OpenAgendaCollector:
             for timing in timings:
                 try:
                     # fromisoformat handles +00:00 and returns aware datetime
-                    end_date = datetime.fromisoformat(timing["end"].replace("Z", "+00:00"))
+                    end_date = datetime.fromisoformat(
+                        timing["end"].replace("Z", "+00:00")
+                    )
                     # Ensure end_date is aware if it wasn't
                     if end_date.tzinfo is None:
                         end_date = end_date.replace(tzinfo=timezone.utc)
-                        
+
                     if end_date >= limit_date:
                         is_recent = True
                         break
                 except (ValueError, KeyError):
                     continue
-            
+
             if is_recent:
-                recent_events.append(event)
-        
-        return recent_events
+                filtered_events.append(event)
+
+        return filtered_events
 
     def save_to_json(self, events, filename="data/raw_events.json"):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(events, f, ensure_ascii=False, indent=4)
         print(f"Saved {len(events)} events to {filename}")
+
 
 if __name__ == "__main__":
     collector = OpenAgendaCollector()
