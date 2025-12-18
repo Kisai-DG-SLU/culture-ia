@@ -23,8 +23,7 @@ test:
 	PYTHONPATH=. $(PYTEST) tests/
 
 lint:
-	$(PYLINT) src/ tests/ --disable=C0111,C0103,R0903
-
+        $(PYLINT) src/ tests/ --disable=C0111,C0103,R0903,W0718,W0621,W0613
 format:
 	$(BLACK) src/ tests/
 

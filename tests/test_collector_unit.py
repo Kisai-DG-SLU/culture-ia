@@ -1,6 +1,5 @@
 import os
 import json
-import pytest
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta, timezone
 from src.collector import OpenAgendaCollector
@@ -52,7 +51,7 @@ def test_fetch_events_api_call():
         assert events[0]["uid"] == 1
         mock_get.assert_called_once()
         # Vérifie que l'URL contient bien l'API key
-        args, kwargs = mock_get.call_args
+        _, kwargs = mock_get.call_args
         assert "key" in kwargs["params"]
 
 
@@ -105,6 +104,6 @@ def test_save_to_json(tmp_path):
     collector.save_to_json(events, filename=str(output_file))
 
     assert output_file.exists()
-    with open(output_file, "r") as f:
+    with open(output_file, "r", encoding="utf-8") as f:
         data = json.load(f)
     assert data[0]["uid"] == 123

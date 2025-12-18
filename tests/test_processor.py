@@ -1,6 +1,4 @@
 import json
-import os
-import pytest
 from src.processor import EventProcessor
 
 # Données brutes simulées (mock)

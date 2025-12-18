@@ -1,0 +1,23 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.1.1
+    hooks:
+      - id: black
+
+  - repo: local
+    hooks:
+      - id: pylint
+        name: Lint (Pylint)
+        entry: make lint
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+
+      - id: pytest
+        name: Tests & Coverage
+        entry: make test
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
