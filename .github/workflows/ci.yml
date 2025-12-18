@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Permissions nécessaires pour le déploiement GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -51,7 +57,7 @@ jobs:
         # Si pas de clé Mistral, ça utilisera SentenceTransformers (local)
         python src/core/vectorstore.py
 
-    - name: Run Tests
+    - name: Run Tests (with Coverage)
       env:
         MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
         OPENAGENDA_API_KEY: ${{ secrets.OPENAGENDA_API_KEY }}
@@ -59,13 +65,39 @@ jobs:
         echo "MISTRAL_API_KEY=$MISTRAL_API_KEY" > .env
         make test
 
-    - name: Upload Coverage Report
+    - name: Upload Coverage XML
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-report
+        name: coverage-xml
         path: coverage.xml
 
     - name: Functional API Test
       run: |
         export PYTHONPATH=$PYTHONPATH:.
         python tests/api_test.py
+
+    # Prépare l'artefact pour GitHub Pages (dossier htmlcov généré par pytest)
+    - name: Upload Pages Artifact
+      if: github.ref == 'refs/heads/main'
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: htmlcov/
+
+  deploy:
+    # Se lance uniquement après build-and-test et sur la branche main
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
