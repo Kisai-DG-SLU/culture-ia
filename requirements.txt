@@ -1,5 +1,6 @@
 # Core
 pytest
+pytest-cov
 python-dotenv
 pandas
 requests

@@ -59,6 +59,12 @@ jobs:
         echo "MISTRAL_API_KEY=$MISTRAL_API_KEY" > .env
         make test
 
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: coverage.xml
+
     - name: Functional API Test
       run: |
         export PYTHONPATH=$PYTHONPATH:.
