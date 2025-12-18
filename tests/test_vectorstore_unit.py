@@ -1,6 +1,5 @@
 import os
 import json
-import pytest
 from unittest.mock import patch, MagicMock
 from src.core.vectorstore import VectorStoreManager
 
@@ -12,7 +11,7 @@ def test_get_embeddings_selection(mock_hf, mock_mistral):
 
     # Cas 1: Clé présente
     with patch.dict(os.environ, {"MISTRAL_API_KEY": "valid_key"}):
-        manager = VectorStoreManager()
+        VectorStoreManager()
         mock_mistral.assert_called_once()
         mock_hf.assert_not_called()
 
@@ -21,7 +20,7 @@ def test_get_embeddings_selection(mock_hf, mock_mistral):
 
     # Cas 2: Pas de clé
     with patch.dict(os.environ, {"MISTRAL_API_KEY": ""}):
-        manager = VectorStoreManager()
+        VectorStoreManager()
         mock_hf.assert_called_once()
         mock_mistral.assert_not_called()
 
@@ -32,7 +31,7 @@ def test_create_index(mock_splitter, mock_faiss, tmp_path):
     """Test la création de l'index."""
     # Setup
     input_file = tmp_path / "processed_events.json"
-    with open(input_file, "w") as f:
+    with open(input_file, "w", encoding="utf-8") as f:
         json.dump([{"text": "Event 1", "metadata": {"id": 1}}], f)
 
     # Mock du splitter qui retourne une liste de docs fictifs

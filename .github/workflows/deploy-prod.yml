@@ -1,0 +1,45 @@
+name: Manual-Prod-Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-to-prod:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Configure Git
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+
+    - name: Merge Test to Prod (and Main)
+      env:
+        HAS_TEST_ENV: ${{ vars.HAS_TEST_ENV }}
+      run: |
+        if [[ "$HAS_TEST_ENV" != "true" ]]; then
+          echo "No TEST environment configured. This workflow is not applicable."
+          exit 1
+        fi
+
+        # 1. Merge test -> prod (Simulation de prod, on va dire que prod = branche 'prod')
+        git fetch origin prod:prod || git checkout -b prod
+        git checkout prod
+        git merge origin/test --no-ff -m "Deploy: Merge test to prod"
+        git push origin prod
+        
+        # 2. Merge dev (via test) -> main (si pas déjà fait)
+        git checkout main
+        git merge origin/test --no-ff -m "Sync: Merge test validated code to main"
+        git push origin main
+
+    - name: Bump Version
+      run: |
+        chmod +x scripts/bump_version.sh
+        ./scripts/bump_version.sh

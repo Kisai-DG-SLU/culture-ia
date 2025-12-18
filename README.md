@@ -1,5 +1,9 @@
 # Culture IA - Assistant de Recommandation d'Événements Culturels
 
+[![CI/CD Pipeline](https://github.com/Kisai-DG-SLU/culture-ia/actions/workflows/ci.yml/badge.svg)](https://github.com/Kisai-DG-SLU/culture-ia/actions/workflows/ci.yml)
+[![GitHub version](https://img.shields.io/github/v/tag/Kisai-DG-SLU/culture-ia?label=version)](https://github.com/Kisai-DG-SLU/culture-ia/tags)
+[![Coverage Report](https://img.shields.io/badge/Coverage-Report-blue)](https://Kisai-DG-SLU.github.io/culture-ia/)
+
 ## 🚀 Présentation du Projet
 Ce projet est un POC (Proof of Concept) développé pour **Puls-Events**. L'objectif est de mettre en place un système **RAG (Retrieval-Augmented Generation)** capable de répondre aux questions des utilisateurs sur les événements culturels récents en s'appuyant sur les données de l'API Open Agenda.
 

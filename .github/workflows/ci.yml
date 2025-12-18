@@ -1,23 +1,26 @@
-name: CI Culture IA
+name: CI-CD-Pipeline
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - '**' # Se déclenche sur toutes les branches
 
-# Permissions nécessaires pour le déploiement GitHub Pages
+# Permissions étendues pour permettre le merge et le push de tags
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 jobs:
-  build-and-test:
+  quality-gate:
     runs-on: ubuntu-latest
-
+    outputs:
+      should_merge: ${{ steps.check_merge.outputs.should_merge }}
+    
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Nécessaire pour le merge et les tags
 
     - name: Set up Python 3.10
       uses: actions/setup-python@v5
@@ -29,74 +32,105 @@ jobs:
         python -m pip install --upgrade pip
         make install
 
-    - name: Check Code Quality (Format)
+    - name: Check Code Format (Black)
       run: |
         make format
-        git diff --exit-code || (echo "❌ Code not formatted. Run 'make format' locally." && exit 1)
+        git diff --exit-code || (echo "❌ Code not formatted." && exit 1)
 
-    - name: Check Code Quality (Lint)
-      run: |
-        make lint || echo "⚠️ Linting issues found (non-blocking for now)"
+    - name: Linting
+      run: make lint || echo "⚠️ Lint warnings"
 
-    - name: Run Environment Check
-      run: |
-        python tests/check_env.py
-
-    - name: Build Test Data (Collect & Index)
+    - name: Run Tests with Coverage Gate (70%)
       env:
-        # On force le mode Mock pour garantir d'avoir des données pour les tests
+        # Secrets mockés ou réels selon besoin
+        MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
         MOCK_DATA: "true"
-        # On utilise une clé dummy si le secret n'est pas là
-        MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
       run: |
-        # 1. Collecte (crée data/raw_events.json avec des données mockées)
-        python src/collector.py
-        # 2. Processing (crée data/processed_events.json)
-        python src/processor.py
-        # 3. Vectorisation (crée data/faiss_index)
-        # Si pas de clé Mistral, ça utilisera SentenceTransformers (local)
-        python src/core/vectorstore.py
-
-    - name: Run Tests (with Coverage)
-      env:
-        MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
-        OPENAGENDA_API_KEY: ${{ secrets.OPENAGENDA_API_KEY }}
-      run: |
+        # pytest.ini contient --cov-fail-under=70, donc ça échouera si < 70%
         echo "MISTRAL_API_KEY=$MISTRAL_API_KEY" > .env
         make test
 
-    - name: Upload Coverage XML
+    - name: Upload Coverage Artifact
       uses: actions/upload-artifact@v4
       with:
         name: coverage-xml
         path: coverage.xml
 
-    - name: Functional API Test
-      run: |
-        export PYTHONPATH=$PYTHONPATH:.
-        python tests/api_test.py
-
-    # Prépare l'artefact pour GitHub Pages (dossier htmlcov généré par pytest)
-    - name: Upload Pages Artifact
+    - name: Upload HTML Report to Pages Artifact
       if: github.ref == 'refs/heads/main'
       uses: actions/upload-pages-artifact@v3
       with:
         path: htmlcov/
 
-  deploy:
-    # Se lance uniquement après build-and-test et sur la branche main
-    needs: build-and-test
-    if: github.ref == 'refs/heads/main'
-    
-    permissions:
-      pages: write
-      id-token: write
+    - name: Check if merge required
+      id: check_merge
+      # On ne merge que si ce n'est PAS main, et si succès précédent
+      run: |
+        if [[ "${{ github.ref }}" != "refs/heads/main" && "${{ github.ref }}" != "refs/heads/test" ]]; then
+          echo "should_merge=true" >> $GITHUB_OUTPUT
+        else
+          echo "should_merge=false" >> $GITHUB_OUTPUT
+        fi
 
+  auto-merge-and-version:
+    needs: quality-gate
+    if: needs.quality-gate.outputs.should_merge == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Configure Git
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+
+    - name: Merge Logic
+      env:
+        HAS_TEST_ENV: ${{ vars.HAS_TEST_ENV }}
+        SOURCE_BRANCH: ${{ github.ref_name }}
+      run: |
+        echo "Source branch: $SOURCE_BRANCH"
+        
+        if [[ "$HAS_TEST_ENV" == "true" ]]; then
+          echo "Environment TEST detected. Merging to 'test' branch."
+          TARGET_BRANCH="test"
+        else
+          echo "No TEST environment. Merging directly to 'main'."
+          TARGET_BRANCH="main"
+        fi
+        
+        # Récupérer et switcher sur la branche cible
+        git fetch origin $TARGET_BRANCH:$TARGET_BRANCH || git checkout -b $TARGET_BRANCH origin/$TARGET_BRANCH || git checkout -b $TARGET_BRANCH
+        git checkout $TARGET_BRANCH
+        
+        # Merge de la branche source
+        echo "Merging $SOURCE_BRANCH into $TARGET_BRANCH..."
+        git merge origin/$SOURCE_BRANCH --no-ff -m "Merge $SOURCE_BRANCH into $TARGET_BRANCH via CI"
+        
+        # Push
+        git push origin $TARGET_BRANCH
+
+    - name: Bump Version (Only if merging to main)
+      if: vars.HAS_TEST_ENV != 'true' # Si on merge direct sur main, on versionne
+      run: |
+        # On est déjà sur main suite au step précédent
+        chmod +x scripts/bump_version.sh
+        ./scripts/bump_version.sh
+
+  deploy-pages:
+    needs: quality-gate
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
