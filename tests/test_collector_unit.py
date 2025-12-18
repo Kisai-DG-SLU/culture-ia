@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta, timezone
 from src.collector import OpenAgendaCollector
 
+
 # Données simulées pour le filtrage
 def mock_event(uid, days_offset):
     """Crée un événement avec une date de fin relative à aujourd'hui."""
@@ -15,10 +16,11 @@ def mock_event(uid, days_offset):
         "timings": [
             {
                 "begin": (end_date - timedelta(hours=2)).isoformat(),
-                "end": end_date.isoformat()
+                "end": end_date.isoformat(),
             }
-        ]
+        ],
     }
+
 
 def test_fetch_events_mock_mode():
     """Test fetch_events quand MOCK_DATA est actif."""
@@ -29,12 +31,14 @@ def test_fetch_events_mock_mode():
         assert events[0]["uid"] == 999999
         assert "Mock" in events[0]["title"]["fr"]
 
+
 def test_fetch_events_api_call():
     """Test fetch_events avec un appel API simulé."""
     # Désactiver le mock data s'il est actif dans l'env global
-    with patch.dict(os.environ, {"MOCK_DATA": "false"}), \
-         patch("src.collector.requests.get") as mock_get:
-        
+    with patch.dict(os.environ, {"MOCK_DATA": "false"}), patch(
+        "src.collector.requests.get"
+    ) as mock_get:
+
         # Setup du mock response
         mock_response = MagicMock()
         mock_response.json.return_value = {"events": [{"uid": 1}]}
@@ -51,17 +55,19 @@ def test_fetch_events_api_call():
         args, kwargs = mock_get.call_args
         assert "key" in kwargs["params"]
 
+
 def test_fetch_events_legacy_call():
     """Test fetch_events sans API key (mode legacy)."""
     # On vide OPENAGENDA_API_KEY en plus de désactiver MOCK_DATA
-    with patch.dict(os.environ, {"MOCK_DATA": "false", "OPENAGENDA_API_KEY": ""}), \
-         patch("src.collector.requests.get") as mock_get:
-        
+    with patch.dict(
+        os.environ, {"MOCK_DATA": "false", "OPENAGENDA_API_KEY": ""}
+    ), patch("src.collector.requests.get") as mock_get:
+
         mock_response = MagicMock()
         mock_response.json.return_value = {"events": [{"uid": 2}]}
         mock_get.return_value = mock_response
 
-        collector = OpenAgendaCollector(api_key=None) # Pas de clé
+        collector = OpenAgendaCollector(api_key=None)  # Pas de clé
         events = collector.fetch_events()
 
         assert len(events) == 1
@@ -70,23 +76,25 @@ def test_fetch_events_legacy_call():
         args, _ = mock_get.call_args
         assert "/v2/" not in args[0]
 
+
 def test_filter_recent_events():
     """Test le filtrage des événements récents."""
     collector = OpenAgendaCollector()
-    
+
     events = [
-        mock_event(1, -400), # Trop vieux (> 365 jours)
-        mock_event(2, -100), # Passé récent
-        mock_event(3, 10),   # Futur
+        mock_event(1, -400),  # Trop vieux (> 365 jours)
+        mock_event(2, -100),  # Passé récent
+        mock_event(3, 10),  # Futur
     ]
 
     filtered = collector.filter_recent_events(events, days=365)
-    
+
     uids = [e["uid"] for e in filtered]
     assert 1 not in uids
     assert 2 in uids
     assert 3 in uids
     assert len(filtered) == 2
+
 
 def test_save_to_json(tmp_path):
     """Test la sauvegarde JSON."""
