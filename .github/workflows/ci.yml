@@ -81,7 +81,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
 
     - name: Configure Git
       run: |
@@ -122,11 +122,8 @@ jobs:
         ./scripts/bump_version.sh
 
   deploy-pages:
-    needs: [quality-gate, auto-merge-and-version]
-    if: |
-      always() && 
-      (github.ref == 'refs/heads/main' || needs.auto-merge-and-version.result == 'success') &&
-      needs.quality-gate.result == 'success'
+    needs: quality-gate
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
