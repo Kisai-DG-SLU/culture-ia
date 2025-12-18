@@ -57,7 +57,7 @@ jobs:
         path: coverage.xml
 
     - name: Upload HTML Report to Pages Artifact
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main' || steps.check_merge.outputs.should_merge == 'true'
       uses: actions/upload-pages-artifact@v3
       with:
         path: htmlcov/
@@ -122,8 +122,11 @@ jobs:
         ./scripts/bump_version.sh
 
   deploy-pages:
-    needs: quality-gate
-    if: github.ref == 'refs/heads/main'
+    needs: [quality-gate, auto-merge-and-version]
+    if: |
+      always() && 
+      (github.ref == 'refs/heads/main' || needs.auto-merge-and-version.result == 'success') &&
+      needs.quality-gate.result == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
