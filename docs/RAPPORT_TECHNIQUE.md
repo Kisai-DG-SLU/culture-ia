@@ -24,9 +24,10 @@ L'architecture repose sur quatre piliers principaux :
 La qualité du système a été mesurée à l'aide de la bibliothèque **Ragas** sur un jeu de tests annoté de 4 questions de référence.
 
 **Métriques observées :**
-- **Fidélité (Faithfulness)** : ~98% (Le système n'hallucine pas et reste fidèle au contexte).
-- **Pertinence de la réponse** : ~96% (Les réponses répondent directement à l'intention de l'utilisateur).
-- **Précision du Retrieval** : 100% sur les cas tests nominaux.
+- **Fidélité (Faithfulness)** : ~86% (Le système respecte bien les documents sources).
+- **Pertinence de la réponse** : ~71% (Les réponses sont globalement liées aux questions).
+- **Rappel (Context Recall)** : ~75% (Le système retrouve 3/4 des informations nécessaires).
+- **Précision du Retrieval** : ~50% (Marge de progression sur le filtrage du bruit dans les documents récupérés).
 
 ## 5. Déploiement
 Le système est entièrement conteneurisé via **Docker**.
