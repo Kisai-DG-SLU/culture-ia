@@ -65,5 +65,5 @@ class RAGChain:
 if __name__ == "__main__":
     rag = RAGChain()
     response = rag.ask("Quels sont les événements sur la cuisine sauvage ?")
-    print(f"Question: Quels sont les événements sur la cuisine sauvage ?")
+    print("Question: Quels sont les événements sur la cuisine sauvage ?")
     print(f"Réponse: {response}")

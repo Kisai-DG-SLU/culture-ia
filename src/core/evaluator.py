@@ -76,9 +76,22 @@ class RAGEvaluator:
 
         # Save results
         output_file = "data/evaluation_results.json"
+
+        # Convert Ragas Result object to a dictionary of scores
+        # Depending on Ragas version, result might behave like a dict-like object
+        # but to be safe, we extract the scores explicitly if it's not directly dumpable
+        try:
+            # Try converting to dict using scores attribute if it exists, or iterate keys
+            if hasattr(result, "scores"):
+                scores = result.scores
+            else:
+                scores = {k: result[k] for k in result.keys()}
+        except Exception as e:
+            print(f"Warning: Could not convert result directly: {e}")
+            scores = str(result)  # Fallback
+
         with open(output_file, "w", encoding="utf-8") as f:
-            # result is a Result object, convert to dict
-            json.dump(dict(result), f, ensure_ascii=False, indent=4)
+            json.dump(scores, f, ensure_ascii=False, indent=4)
         print(f"Results saved to {output_file}")
         return result
 
