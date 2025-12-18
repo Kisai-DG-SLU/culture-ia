@@ -25,4 +25,4 @@ git config user.email "actions@github.com"
 # Créer le tag et le pousser
 git tag -a "$NEW_TAG" -m "Auto-bump version to $NEW_TAG"
 git push origin "$NEW_TAG"
-echo "::set-output name=new_tag::$NEW_TAG"
+echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
