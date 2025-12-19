@@ -1,0 +1,12 @@
+.venv/
+.git/
+.pytest_cache/
+__pycache__/
+htmlcov/
+*.xml
+*.log
+data/
+tests/
+docs/
+.env
+.python-version
