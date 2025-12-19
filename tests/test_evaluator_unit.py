@@ -43,3 +43,64 @@ def test_run_evaluation_logic(mock_prep, mock_evaluate, mock_json, mock_evaluato
     scores = args[0]
     assert isinstance(scores, dict)
     assert "faithfulness" in scores
+
+
+@patch("builtins.open")
+@patch("src.core.evaluator.json")
+@patch("src.core.evaluator.Dataset")
+def test_prepare_dataset(mock_dataset, mock_json, mock_open, mock_evaluator):
+    """Vérifie la préparation du dataset pour l'évaluation."""
+    # Setup des mocks
+    mock_json.load.return_value = [
+        {"question": "Q1", "ground_truth": "A1"},
+        {"question": "Q2", "ground_truth": "A2"},
+    ]
+
+    # Mock du retriever
+    mock_retriever = MagicMock()
+    mock_doc = MagicMock()
+    mock_doc.page_content = "Context content"
+    mock_retriever.invoke.return_value = [mock_doc]
+    mock_evaluator.rag_chain.vectorstore.as_retriever.return_value = mock_retriever
+
+    # Mock de rag_chain.ask
+    mock_evaluator.rag_chain.ask.return_value = "Generated Answer"
+
+    # Exécution
+    mock_evaluator.prepare_dataset("dummy_path.json")
+
+    # Vérifications
+    assert mock_open.called
+    assert mock_json.load.called
+    assert mock_evaluator.rag_chain.ask.call_count == 2
+
+    # Vérifier que Dataset.from_dict a reçu les bonnes données
+    assert mock_dataset.from_dict.called
+    args, _ = mock_dataset.from_dict.call_args
+    data = args[0]
+    assert len(data["user_input"]) == 2
+    assert len(data["response"]) == 2
+    assert len(data["retrieved_contexts"]) == 2
+    assert len(data["reference"]) == 2
+    assert data["retrieved_contexts"][0] == ["Context content"]
+
+
+@patch("src.core.evaluator.evaluate")
+@patch("src.core.evaluator.RAGEvaluator.prepare_dataset")
+def test_run_evaluation_exception(mock_prep, mock_evaluate, mock_evaluator):
+    """Vérifie que l'évaluation gère gracieusement les erreurs de format de résultat."""
+    # Simulation d'un résultat qui provoque une erreur lors de la conversion
+    mock_result = MagicMock()
+    # On fait en sorte que l'accès aux scores ou l'itération plante
+    del mock_result.scores
+    mock_result.keys.side_effect = Exception("Format inattendu")
+    mock_result.__str__.return_value = "ResultatTextuel"
+
+    mock_evaluate.return_value = mock_result
+    mock_prep.return_value = MagicMock()
+
+    with patch("builtins.open", MagicMock()) as mock_file_open:
+        mock_evaluator.run_evaluation("dummy.json")
+
+        # On vérifie que le fichier a quand même été ouvert pour écrire quelque chose
+        assert mock_file_open.called
