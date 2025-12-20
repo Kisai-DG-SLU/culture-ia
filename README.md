@@ -73,6 +73,23 @@ culture-ia/
 
 ---
 
+## 🐳 Docker (Déploiement)
+L'application est conteneurisée pour faciliter le déploiement et la reproduction.
+
+### Commandes rapides
+1. **Construire l'image** (Optimisée ~3Go) :
+   ```bash
+   make docker-build
+   ```
+
+2. **Lancer le conteneur** :
+   ```bash
+   make docker-run
+   ```
+   L'API sera accessible sur [http://localhost:8000](http://localhost:8000).
+
+---
+
 ## 📊 Évaluation et Qualité
 Le système inclut un jeu de tests annotés et utilise **Ragas** pour évaluer :
 - La pertinence de la réponse.
