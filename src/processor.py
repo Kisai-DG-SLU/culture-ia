@@ -46,9 +46,9 @@ class EventProcessor:
             formatted_parts.extend(
                 [f"- {d.strftime('%A %d %B %Y à %H:%M')}" for d in future_dates]
             )
-            # Pour le résumé de recherche (les 3 prochaines)
-            next_3 = [d.strftime("%d/%m/%Y") for d in future_dates[:3]]
-            next_dates_str = "Prochaines sessions : " + ", ".join(next_3)
+            # Pour le résumé de recherche (TOUTES les dates futures pour un retrieval précis)
+            all_future_str = [d.strftime("%d/%m/%Y") for d in future_dates]
+            next_dates_str = "Prochaines sessions : " + ", ".join(all_future_str)
 
         if past_dates:
             formatted_parts.append("\nARCHIVES (DATES PASSÉES - NE PAS PROPOSER) :")
