@@ -34,31 +34,33 @@ class EventProcessor:
         # Tri chronologique absolu
         dates_objects.sort()
 
-        # Séparation Passé / Futur pour la clarté du contexte LLM
-        # (Sans supprimer l'historique requis par les specs)
+        # Séparation Passé / Futur
         future_dates = [d for d in dates_objects if d >= now]
         past_dates = [d for d in dates_objects if d < now]
 
         formatted_parts = []
+        next_dates_str = ""
 
         if future_dates:
-            formatted_parts.append("DATES À VENIR :")
+            formatted_parts.append("DATES À VENIR (OFFICIELLES) :")
             formatted_parts.extend(
-                [f"- Le {d.strftime('%d/%m/%Y à %H:%M')}" for d in future_dates]
+                [f"- {d.strftime('%A %d %B %Y à %H:%M')}" for d in future_dates]
             )
+            # Pour le résumé de recherche (les 3 prochaines)
+            next_3 = [d.strftime("%d/%m/%Y") for d in future_dates[:3]]
+            next_dates_str = "Prochaines sessions : " + ", ".join(next_3)
 
         if past_dates:
-            formatted_parts.append("\nARCHIVES (DATES PASSÉES) :")
-            # On affiche les plus récentes du passé en premier
+            formatted_parts.append("\nARCHIVES (DATES PASSÉES - NE PAS PROPOSER) :")
             formatted_parts.extend(
-                [f"- Le {d.strftime('%d/%m/%Y à %H:%M')}" for d in reversed(past_dates)]
+                [f"- {d.strftime('%A %d %B %Y à %H:%M')}" for d in reversed(past_dates)]
             )
 
         # Si aucune date n'est trouvée
         if not formatted_parts:
-            return ["Date non spécifiée"], timestamps
+            return ["Date non spécifiée"], timestamps, ""
 
-        return formatted_parts, timestamps
+        return formatted_parts, timestamps, next_dates_str
 
     def _create_metadata(
         self,
@@ -71,6 +73,7 @@ class EventProcessor:
         url,
         timestamps,
         full_dates_str,
+        next_dates_short_str,
     ):
         """Create metadata dictionary and search text."""
         # Résumé des dates pour le vecteur (Recherche sémantique)
@@ -78,7 +81,7 @@ class EventProcessor:
             min_date = datetime.fromtimestamp(min(timestamps)).strftime("%d/%m/%Y")
             max_date = datetime.fromtimestamp(max(timestamps)).strftime("%d/%m/%Y")
             summary_dates_str = (
-                f"Événement disponible sur plusieurs dates du {min_date} au {max_date}."
+                f"Événement du {min_date} au {max_date}. {next_dates_short_str}"
             )
         else:
             summary_dates_str = "Date non spécifiée"
@@ -88,7 +91,7 @@ class EventProcessor:
         end_ts = max(timestamps) if timestamps else 0
         city = location.get("city", "Inconnu")
 
-        # 1. Search Text (Optimisé pour la recherche vectorielle : COURT et DENSE)
+        # 1. Search Text (Optimisé pour la recherche vectorielle)
         search_text = (
             f"Titre: {title}\n"
             f"Description: {description}\n"
@@ -144,7 +147,9 @@ class EventProcessor:
             url = event.get("canonicalUrl", "")
 
             # Extraction des dates via helper
-            dates_list, timestamps = self._parse_timings(event.get("timings", []))
+            dates_list, timestamps, next_dates_short_str = self._parse_timings(
+                event.get("timings", [])
+            )
 
             full_dates_str = (
                 "\n".join(dates_list) if dates_list else "Date non spécifiée"
@@ -161,6 +166,7 @@ class EventProcessor:
                 url,
                 timestamps,
                 full_dates_str,
+                next_dates_short_str,
             )
 
             processed_events.append(
