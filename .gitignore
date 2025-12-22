@@ -7,4 +7,5 @@ __pycache__/
 htmlcov/
 data/
 .venv/
+.venv_conda/
 coverage.xml
