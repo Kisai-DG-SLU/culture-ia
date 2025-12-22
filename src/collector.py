@@ -47,7 +47,22 @@ class OpenAgendaCollector:
         if self.api_key:
             # V2 API
             url = f"https://api.openagenda.com/v2/agendas/{self.agenda_uid}/events"
-            params = {"key": self.api_key, "timings": "true"}
+            params = {
+                "key": self.api_key,
+                "includeFields[]": [
+                    "uid",
+                    "title",
+                    "description",
+                    "longDescription",
+                    "location",
+                    "timings",
+                    "keywords",
+                    "canonicalUrl",
+                    "range",
+                ],
+                "relative[]": ["current", "upcoming"],
+                "limit": 100,
+            }
             response = requests.get(url, params=params, timeout=10)
         else:
             # Legacy JSON export (public)
