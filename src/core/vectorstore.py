@@ -50,8 +50,8 @@ class VectorStoreManager:
 
         # Découpage en chunks pour gérer les textes longs
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
+            chunk_size=4000,
+            chunk_overlap=500,
             length_function=len,
         )
         split_docs = text_splitter.split_documents(documents)

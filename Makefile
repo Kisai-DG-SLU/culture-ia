@@ -28,7 +28,10 @@ format:
 	$(BLACK) src/ tests/
 
 run:
-	$(PYTHON) src/main.py
+	PYTHONPATH=. $(PYTHON) src/main.py
+
+evaluate:
+	PYTHONPATH=. $(PYTHON) src/core/evaluator.py
 
 view:
 	grip docs/ -b
