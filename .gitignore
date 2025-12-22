@@ -9,3 +9,4 @@ data/
 .venv/
 .venv_conda/
 coverage.xml
+docs/private/
