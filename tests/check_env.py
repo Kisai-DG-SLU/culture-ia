@@ -5,7 +5,7 @@ try:
     # pylint: disable=unused-import
     import faiss
     from langchain_community.vectorstores import FAISS
-    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_huggingface import HuggingFaceEmbeddings
     from mistralai import Mistral
 
     print(
