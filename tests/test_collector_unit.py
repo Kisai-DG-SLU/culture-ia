@@ -50,10 +50,15 @@ def test_fetch_events_api_call():
         assert len(events) == 1
         assert events[0]["uid"] == 1
         mock_get.assert_called_once()
-        # Vérifie que l'URL contient bien l'API key et le paramètre timings
+        # Vérifie que l'URL contient bien l'API key et les paramètres requis
         _, kwargs = mock_get.call_args
-        assert "key" in kwargs["params"]
-        assert kwargs["params"]["timings"] == "true"
+        params = kwargs["params"]
+        assert "key" in params
+        assert "includeFields[]" in params
+        assert "timings" in params["includeFields[]"]
+        assert "relative[]" in params
+        assert "current" in params["relative[]"]
+        assert params["limit"] == 100
 
 
 def test_fetch_events_legacy_call():
