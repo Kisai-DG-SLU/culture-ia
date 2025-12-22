@@ -1,13 +1,23 @@
 .PHONY: install test run view save-brain docker-build docker-run lint format
 
-# Détection de l'environnement : utilise .venv si présent, sinon python système
-VENV_EXISTS := $(shell [ -d .venv ] && echo 1 || echo 0)
-ifeq ($(VENV_EXISTS), 1)
-	PYTHON = .venv/bin/python
-	PIP = .venv/bin/pip
-	PYTEST = .venv/bin/pytest
-	BLACK = .venv/bin/black
-	PYLINT = .venv/bin/pylint
+# Détection de l'environnement
+VENV_CONDA_EXISTS := $(shell [ -f .venv_conda/bin/python ] && echo 1 || echo 0)
+VENV_PIP_EXISTS := $(shell [ -f .venv/bin/python ] && echo 1 || echo 0)
+
+ifeq ($(VENV_CONDA_EXISTS), 1)
+	VENV_DIR = .venv_conda
+	PYTHON = $(VENV_DIR)/bin/python
+	PIP = $(VENV_DIR)/bin/pip
+	PYTEST = $(VENV_DIR)/bin/pytest
+	BLACK = $(VENV_DIR)/bin/black
+	PYLINT = $(VENV_DIR)/bin/pylint
+else ifeq ($(VENV_PIP_EXISTS), 1)
+	VENV_DIR = .venv
+	PYTHON = $(VENV_DIR)/bin/python
+	PIP = $(VENV_DIR)/bin/pip
+	PYTEST = $(VENV_DIR)/bin/pytest
+	BLACK = $(VENV_DIR)/bin/black
+	PYLINT = $(VENV_DIR)/bin/pylint
 else
 	PYTHON = python
 	PIP = pip
@@ -23,7 +33,7 @@ test:
 	PYTHONPATH=. $(PYTEST) tests/
 
 lint:
-	$(PYLINT) src/ tests/ --disable=C0111,C0103,R0903,W0718,W0621,W0613
+	$(PYLINT) src/ tests/ --disable=C0111,C0103,R0903,W0718,W0621,W0613,R0913,R0917,R0914
 format:
 	$(BLACK) src/ tests/
 

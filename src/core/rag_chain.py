@@ -24,6 +24,7 @@ class RAGChain:
         if self.vectorstore is None:
             raise ValueError("Vector store not found. Please run vectorstore.py first.")
 
+        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
         self.llm = self._init_llm()
         self.prompt = self._get_prompt_template()
         self.chain = self._build_chain()
@@ -57,14 +58,22 @@ class RAGChain:
         return datetime.now().strftime("%A %d %B %Y")
 
     def _format_docs(self, docs):
-        return "\n\n".join(doc.page_content for doc in docs)
+        # Déduplication basée sur l'URL pour ne pas répéter le même événement complet
+        unique_docs = {}
+        for doc in docs:
+            url = doc.metadata.get("url")
+            if url and url not in unique_docs:
+                unique_docs[url] = doc.metadata.get("full_context", doc.page_content)
+            elif not url:
+                # Fallback si pas d'URL (ne devrait pas arriver avec nos données)
+                unique_docs[str(hash(doc.page_content))] = doc.page_content
+
+        return "\n\n".join(unique_docs.values())
 
     def _build_chain(self):
-        retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
-
         chain = (
             {
-                "context": retriever | self._format_docs,
+                "context": self.retriever | self._format_docs,
                 "question": RunnablePassthrough(),
                 "current_date": self._get_current_date,
             }

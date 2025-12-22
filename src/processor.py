@@ -12,9 +12,10 @@ class EventProcessor:
         self.input_file = input_file
         self.output_file = output_file
 
-    def _extract_dates(self, timings):
-        """Extract and format dates from timings."""
+    def _parse_timings(self, timings):
+        """Parse timings to extract formatted dates and timestamps."""
         dates_list = []
+        timestamps = []
         for timing in timings:
             try:
                 begin_str = timing.get("begin")
@@ -26,9 +27,69 @@ class EventProcessor:
                         f"Du {dt_begin.strftime('%d/%m/%Y à %H:%M')} "
                         f"au {dt_end.strftime('%d/%m/%Y à %H:%M')}"
                     )
+                    timestamps.append(dt_begin.timestamp())
+                    timestamps.append(dt_end.timestamp())
             except ValueError:
                 continue
-        return "\n".join(dates_list) if dates_list else "Date non spécifiée"
+        return dates_list, timestamps
+
+    def _create_metadata(
+        self,
+        event,
+        location,
+        location_str,
+        title,
+        description,
+        keywords,
+        url,
+        timestamps,
+        full_dates_str,
+    ):
+        """Create metadata dictionary and search text."""
+        # Résumé des dates pour le vecteur (Recherche sémantique)
+        if timestamps:
+            min_date = datetime.fromtimestamp(min(timestamps)).strftime("%d/%m/%Y")
+            max_date = datetime.fromtimestamp(max(timestamps)).strftime("%d/%m/%Y")
+            summary_dates_str = (
+                f"Événement disponible sur plusieurs dates du {min_date} au {max_date}."
+            )
+        else:
+            summary_dates_str = "Date non spécifiée"
+
+        # Métadonnées structurées
+        start_ts = min(timestamps) if timestamps else 0
+        end_ts = max(timestamps) if timestamps else 0
+        city = location.get("city", "Inconnu")
+
+        # 1. Search Text (Optimisé pour la recherche vectorielle : COURT et DENSE)
+        search_text = (
+            f"Titre: {title}\n"
+            f"Description: {description}\n"
+            f"Lieu: {location_str}\n"
+            f"Période: {summary_dates_str}\n"
+            f"Mots-clés: {keywords}"
+        )
+
+        # 2. Full Context (Pour le LLM : contient TOUT)
+        full_context = (
+            f"Titre: {title}\n"
+            f"Description: {description}\n"
+            f"Lieu: {location_str}\n"
+            f"Détail des dates:\n{full_dates_str}\n"
+            f"Mots-clés: {keywords}\n"
+            f"URL: {url}"
+        )
+
+        return search_text, {
+            "title": title,
+            "location": location_str,
+            "url": url,
+            "keywords": keywords,
+            "city": city,
+            "start_ts": start_ts,
+            "end_ts": end_ts,
+            "full_context": full_context,
+        }
 
     def process(self):
         if not os.path.exists(self.input_file):
@@ -53,31 +114,32 @@ class EventProcessor:
             ).strip(", ")
 
             keywords = ", ".join(event.get("keywords", {}).get("fr", []))
-
-            date_range = self._extract_dates(event.get("timings", []))
-
             url = event.get("canonicalUrl", "")
 
-            # Combine into a single text block for embedding, but keep metadata
-            full_text = (
-                f"Titre: {title}\n"
-                f"Description: {description}\n"
-                f"Lieu: {location_str}\n"
-                f"Dates: {date_range}\n"
-                f"Mots-clés: {keywords}"
+            # Extraction des dates via helper
+            dates_list, timestamps = self._parse_timings(event.get("timings", []))
+            full_dates_str = (
+                "\n".join(dates_list) if dates_list else "Date non spécifiée"
+            )
+
+            # Création des métadonnées et du texte de recherche
+            search_text, metadata = self._create_metadata(
+                event,
+                location,
+                location_str,
+                title,
+                description,
+                keywords,
+                url,
+                timestamps,
+                full_dates_str,
             )
 
             processed_events.append(
                 {
                     "id": event.get("uid"),
-                    "text": full_text,
-                    "metadata": {
-                        "title": title,
-                        "location": location_str,
-                        "dates": date_range,
-                        "url": url,
-                        "keywords": keywords,
-                    },
+                    "text": search_text,
+                    "metadata": metadata,
                 }
             )
 
