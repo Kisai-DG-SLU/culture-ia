@@ -1,4 +1,7 @@
-.PHONY: install test run view save-brain docker-build docker-run lint format
+# Inclusion des commandes de maintenance privées (si présentes)
+-include maintenance.mk
+
+.PHONY: install test run view docker-build docker-run lint format
 
 # Détection de l'environnement
 VENV_CONDA_EXISTS := $(shell [ -f .venv_conda/bin/python ] && echo 1 || echo 0)
@@ -53,11 +56,7 @@ docker-build:
 	docker build -t culture-ia .
 
 docker-run:
-	docker run -p 8000:8000 -p 8501:8501 --env-file .env culture-ia
+	docker run --rm --name culture-ia-container -p 8000:8000 -p 8501:8501 --env-file .env culture-ia
 
-save-brain:
-	@echo "🧠 Sauvegarde Stealth vers Guesdon-Brain..."
-	@mkdir -p "/Users/daminou/Dev/Guesdon-Brain/Formation_IA/Projet_7/culture-ia"
-	@cp GEMINI.md "/Users/daminou/Dev/Guesdon-Brain/Formation_IA/Projet_7/culture-ia/" 2>/dev/null || true
-	@cp -r specs/ "/Users/daminou/Dev/Guesdon-Brain/Formation_IA/Projet_7/culture-ia/specs/" 2>/dev/null || true
-	@cd "/Users/daminou/Dev/Guesdon-Brain" && git add . && git commit -m "Backup: culture-ia" && git push origin main && echo "✅ Brain Synced!"
+docker-stop:
+	docker stop culture-ia-container || true
