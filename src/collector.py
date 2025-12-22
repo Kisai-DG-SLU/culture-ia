@@ -58,13 +58,47 @@ class OpenAgendaCollector:
         data = response.json()
         return data.get("events", [])
 
-    def filter_recent_events(self, events, days=730):
+    def filter_recent_events(self, events, days=365):
         """
         Filter events that occurred within the last 'days' days or are in the future.
-        WARNING: Filtering disabled for demo purposes to ensure data.
         """
-        print(f"⚠️  Filtrage temporel désactivé : {len(events)} événements conservés.")
-        return events
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+        filtered_events = []
+
+        for event in events:
+            timings = event.get("timings", [])
+            if not timings:
+                continue
+
+            is_recent = False
+            for timing in timings:
+                try:
+                    end_str = timing.get("end")
+                    if not end_str:
+                        continue
+
+                    # Handle Z for UTC if present (Python 3.10 compatibility)
+                    end_str = end_str.replace("Z", "+00:00")
+                    end_date = datetime.fromisoformat(end_str)
+
+                    # Ensure comparison is timezone-aware
+                    if end_date.tzinfo is None:
+                        end_date = end_date.replace(tzinfo=timezone.utc)
+
+                    if end_date >= cutoff_date:
+                        is_recent = True
+                        break
+                except (ValueError, TypeError):
+                    continue
+
+            if is_recent:
+                filtered_events.append(event)
+
+        print(
+            f"✅ Filtrage temporel activé ({days} jours) : "
+            f"{len(filtered_events)}/{len(events)} événements conservés."
+        )
+        return filtered_events
 
     def save_to_json(self, events, filename="data/raw_events.json"):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
