@@ -1,6 +1,3 @@
-# Inclusion des commandes de maintenance privées (si présentes)
--include maintenance.mk
-
 .PHONY: install test run view docker-build docker-run lint format
 
 # Détection de l'environnement
