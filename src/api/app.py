@@ -1,3 +1,5 @@
+import os
+import json
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from src.core.rag_chain import RAGChain
@@ -28,6 +30,26 @@ class Response(BaseModel):
 @app.get("/")
 def read_root():
     return {"message": "Bienvenue sur l'API Culture IA !"}
+
+
+@app.get("/metrics")
+def get_metrics():
+    """Retourne les dernières métriques d'évaluation Ragas."""
+    metrics_path = "data/evaluation_results.json"
+    if os.path.exists(metrics_path):
+        try:
+            with open(metrics_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {"error": "Erreur lors de la lecture des métriques"}
+
+    # Valeurs par défaut si pas encore d'évaluation
+    return {
+        "faithfulness": 0.0,
+        "answer_relevancy": 0.0,
+        "context_recall": 0.0,
+        "context_precision": 0.0,
+    }
 
 
 @app.post("/ask", response_model=Response)
