@@ -6,7 +6,6 @@ htmlcov/
 *.xml
 *.log
 data/
-tests/
 docs/
 .env
 .python-version
