@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 
 
 class EventProcessor:
@@ -10,6 +11,24 @@ class EventProcessor:
     ):
         self.input_file = input_file
         self.output_file = output_file
+
+    def _extract_dates(self, timings):
+        """Extract and format dates from timings."""
+        dates_list = []
+        for timing in timings:
+            try:
+                begin_str = timing.get("begin")
+                end_str = timing.get("end")
+                if begin_str and end_str:
+                    dt_begin = datetime.fromisoformat(begin_str)
+                    dt_end = datetime.fromisoformat(end_str)
+                    dates_list.append(
+                        f"Du {dt_begin.strftime('%d/%m/%Y à %H:%M')} "
+                        f"au {dt_end.strftime('%d/%m/%Y à %H:%M')}"
+                    )
+            except ValueError:
+                continue
+        return "\n".join(dates_list) if dates_list else "Date non spécifiée"
 
     def process(self):
         if not os.path.exists(self.input_file):
@@ -35,7 +54,7 @@ class EventProcessor:
 
             keywords = ", ".join(event.get("keywords", {}).get("fr", []))
 
-            date_range = event.get("range", {}).get("fr", "")
+            date_range = self._extract_dates(event.get("timings", []))
 
             url = event.get("canonicalUrl", "")
 

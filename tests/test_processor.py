@@ -66,7 +66,7 @@ def test_process_creates_output_file(tmp_path):
     assert "Expo Photo" in event2["text"]
     assert "Une belle expo" in event2["text"]
     assert "Lyon" in event2["metadata"]["location"]  # Doit contenir au moins la ville
-    assert event2["metadata"]["dates"] == ""  # Vide si manquant
+    assert event2["metadata"]["dates"] == "Date non spécifiée"  # Vide si manquant
 
 
 def test_process_handles_missing_input_file(tmp_path, capsys):
