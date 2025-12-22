@@ -108,6 +108,43 @@ with tab2:
 with tab3:
     st.header("Métriques d'Évaluation (Ragas)")
 
+    # Bouton pour lancer l'évaluation
+    if st.button(
+        "🚀 Lancer une nouvelle évaluation complète",
+        help="Exécute le moteur Ragas sur le jeu de test. Cela peut prendre 1 à 2 minutes.",
+    ):
+        with st.status("Évaluation en cours...", expanded=True) as status:
+            st.write("📡 Envoi des questions au LLM Mistral...")
+            st.write("📊 Calcul des scores Fidélité, Pertinence et Rappel...")
+
+            try:
+                import subprocess
+
+                # Exécution directe du script python
+                process = subprocess.Popen(
+                    ["python", "src/core/evaluator.py"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+                stdout, stderr = process.communicate()
+
+                if process.returncode == 0:
+                    status.update(
+                        label="Évaluation terminée avec succès !",
+                        state="complete",
+                        expanded=False,
+                    )
+                    st.toast("Scores mis à jour !")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    status.update(label="Erreur lors de l'évaluation", state="error")
+                    st.error(f"Erreur: {stderr}\nOutput: {stdout}")
+            except Exception as e:
+                status.update(label="Erreur système", state="error")
+                st.error(str(e))
+
     try:
         res = requests.get(f"{API_URL}/metrics")
         if res.status_code == 200:
@@ -147,7 +184,7 @@ with tab3:
                 df, r="r", theta="theta", line_close=True, range_r=[0, 1]
             )
             fig.update_traces(fill="toself")
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
             st.caption(
                 "*Note : Une précision de 50% avec une base de 2 documents est structurellement normale (voir Rapport Technique).*"
