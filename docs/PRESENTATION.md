@@ -67,16 +67,18 @@ Pourquoi ces choix ?
 
 ---
 
-## Slide 6 : Démonstration (Scénarios)
-*(Transition vers la démo live de l'API)*
+## Slide 6 : Démonstration (Cockpit de Pilotage)
+*(Transition vers la démo live de l'interface Streamlit)*
 
-Nous allons tester 3 cas :
-1.  **Recherche Thématique** : "Je cherche une activité autour de la nature et de la cuisine."
-    - *Attendu* : L'assistant doit retrouver "Balade découverte et cuisine sauvage".
-2.  **Recherche Temporelle** : "Y a-t-il des événements en 2025 ?"
-    - *Attendu* : L'assistant doit citer les dates futures récupérées.
-3.  **Question Hors-Périmètre** : "Quelle est la capitale de la France ?"
-    - *Attendu* : L'assistant doit rester courtois mais se concentrer sur les événements (ou répondre brièvement).
+Nous allons utiliser le **Cockpit IA** développé pour ce POC :
+
+1.  **Onglet Assistant** :
+    - *Question* : "Je cherche une activité autour de la nature et de la cuisine."
+    - *Réponse* : L'assistant interroge FAISS et génère une réponse fluide.
+2.  **Onglet Performances** :
+    - Visualisation en temps réel des scores Ragas sous forme de **Radar Chart** (Fidélité vs Rappel).
+3.  **Onglet Administration** :
+    - Démonstration de la mise à jour à chaud : Clic sur "Reconstruire l'index".
 
 ---
 
@@ -84,12 +86,14 @@ Nous allons tester 3 cas :
 Comment mesurer la qualité ? Utilisation de la librairie **Ragas**.
 
 **Métriques Clés (sur jeu de test) :**
-- **Fidélité (Faithfulness) : ~86%**
+- **Fidélité (Faithfulness) : ~82%** (Optimisé via prompt strict)
     - Le modèle n'invente pas d'informations (hallucinations faibles).
-- **Pertinence (Relevancy) : ~71%**
+- **Pertinence (Relevancy) : ~73%**
     - Les réponses sont directes et utiles.
 - **Rappel (Context Recall) : ~75%**
-    - Le système retrouve la majorité des informations pertinentes dans la base.
+    - Le système retrouve la majorité des informations pertinentes.
+- **Précision Contexte (Context Precision) : ~50%**
+    - *Note explicative* : Ce score est un artefact lié à la taille de la base (2 événements). Pour une question précise, le système ramène 1 document utile + 1 inutile (car k=2), ce qui divise mathématiquement la précision par deux.
 
 ---
 
