@@ -10,3 +10,4 @@
 - [x] Mise à jour de la documentation finale.
 \n## Maintenance / Bug Fixes\n- [x] Correction de l'extraction des dates dans processor.py pour inclure les événements futurs.
 - [x] Optimisation des performances RAGAS (Chunk size 4000 pour inclure tout le contexte).
+- [x] Implementation stratégie Small-to-Big Retrieval (Résumé vectorisé + Contexte complet en metadata) pour optimisation RAG.

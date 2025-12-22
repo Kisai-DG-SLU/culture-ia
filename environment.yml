@@ -1,0 +1,37 @@
+name: culture-ia
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  # Data & Core
+  - pandas
+  - requests
+  - numpy<2.0.0
+  # Vector DB & ML
+  - faiss-cpu
+  - sentence-transformers
+  # API
+  - fastapi
+  - uvicorn
+  - httpx
+  # Frontend
+  - streamlit
+  - plotly
+  # Quality & Testing
+  - pytest
+  - pytest-cov
+  - pre-commit
+  - black
+  - pylint
+  # Dependencies available via pip
+  - pip:
+    - python-dotenv
+    - langchain
+    - langchain-community
+    - langchain-mistralai
+    - langchain-huggingface
+    - mistralai
+    - tiktoken
+    - ragas

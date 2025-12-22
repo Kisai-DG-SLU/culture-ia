@@ -24,7 +24,8 @@ class RAGChain:
         if self.vectorstore is None:
             raise ValueError("Vector store not found. Please run vectorstore.py first.")
 
-        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
+        # K=2 est le compromis idéal pour ce petit dataset (2 événements au total)
+        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 2})
         self.llm = self._init_llm()
         self.prompt = self._get_prompt_template()
         self.chain = self._build_chain()
@@ -38,18 +39,18 @@ class RAGChain:
         Tu es un assistant expert en événements culturels pour Puls-Events.
         Nous sommes le : {current_date}.
         
-        Utilise EXCLUSIVEMENT les éléments de contexte suivants pour répondre à la question de l'utilisateur.
-        
-        Si les informations ne sont pas dans le contexte, dis poliment que tu n'as pas l'information dans ta base de données actuelle.
-        Pour les questions temporelles (prochains, ce week-end...), utilise la date actuelle pour filtrer ce qui est passé.
-        N'invente JAMAIS de détails.
+        CONSIGNES STRICTES :
+        1. Utilise EXCLUSIVEMENT les éléments de contexte ci-dessous.
+        2. Si la réponse n'est pas dans le contexte, dis : "Désolé, je n'ai pas cette information dans ma base."
+        3. Ne cite que les dates futures ou en cours par rapport à la date du jour.
+        4. Sois précis et factuel. Pas d'interprétation.
 
-        Contexte:
+        CONTEXTE :
         {context}
 
-        Question: {question}
+        QUESTION : {question}
 
-        Réponse:
+        RÉPONSE :
         """
         return ChatPromptTemplate.from_template(template)
 
@@ -82,16 +83,6 @@ class RAGChain:
             | StrOutputParser()
         )
         return chain
-
-    def ask(self, query: str):
-        return self.chain.invoke(query)
-
-
-if __name__ == "__main__":
-    rag = RAGChain()
-    response = rag.ask("Quels sont les événements sur la cuisine sauvage ?")
-    print("Question: Quels sont les événements sur la cuisine sauvage ?")
-    print(f"Réponse: {response}")
 
     def ask(self, query: str):
         return self.chain.invoke(query)

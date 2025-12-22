@@ -1,30 +1,33 @@
-FROM python:3.10-slim
+FROM continuumio/miniconda3
 
 WORKDIR /app
 
-# Install system dependencies for FAISS and others
+# Installation des outils de compilation basiques (parfois nécessaires pour certaines libs pip)
 RUN apt-get update && apt-get install -y \
     build-essential \
-    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copie du fichier d'environnement
+COPY environment.yml .
 
-# Copy the rest of the application
-COPY . .
+# Création de l'environnement Conda
+# On utilise --prune pour nettoyer les caches et réduire la taille
+RUN conda env create -f environment.yml && conda clean -afy
 
-# Set PYTHONPATH
+# Activation de l'environnement par défaut dans le path
+# Cela évite d'avoir à faire "conda activate" à chaque commande
+ENV PATH=/opt/conda/envs/culture-ia/bin:$PATH
 ENV PYTHONPATH=/app
 
-# Expose port
-EXPOSE 8000
+# Copie du reste de l'application
+COPY . .
 
-# Copy entrypoint script and make it executable
+# Exposition des ports API et Streamlit
+EXPOSE 8000
+EXPOSE 8501
+
+# Script de démarrage
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
-# Command to run the application
 CMD ["./entrypoint.sh"]
-

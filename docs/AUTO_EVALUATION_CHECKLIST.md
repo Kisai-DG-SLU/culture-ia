@@ -4,8 +4,8 @@ Utilisez cette liste pour vérifier vos livrables avant la soutenance.
 
 ## 1. Environnement & Reproductibilité
 - [x] Python 3.8+ utilisé.
-- [x] `requirements.txt` présent et complet (incluant langchain, faiss, mistralai, ragas).
-- [x] `README.md` expliquant comment installer et lancer le projet.
+- [x] `environment.yml` présent et complet (gestion via Conda).
+- [x] `README.md` expliquant l'installation (Docker/Conda) et l'utilisation.
 - [x] Utilisation de variables d'environnement (`.env`) pour les clés API.
 - [x] Pipeline CI (GitHub Actions) fonctionnelle.
 
@@ -30,7 +30,7 @@ Utilisez cette liste pour vérifier vos livrables avant la soutenance.
 - [x] Endpoint `POST /ask` opérationnel.
 - [x] Endpoint `POST /rebuild` opérationnel.
 - [x] Documentation Swagger accessible sur `/docs`.
-- [x] Script de test fonctionnel (`tests/api_test.py`) présent.
+- [x] Script de test fonctionnel (`tests/test_api_unit.py`) présent.
 
 ## 6. Déploiement & Présentation
 - [x] Dockerfile fonctionnel.
