@@ -23,11 +23,15 @@ C'est la méthode la plus simple et la plus fiable.
 *Le conteneur est basé sur une image **Miniconda3**, garantissant que l'environnement d'exécution est strictement identique à l'environnement de développement Conda.*
 
 1.  **Prérequis** : Docker installé.
-2.  **Lancer l'application** :
+2.  **Construire l'image** :
+    ```bash
+    make docker-build
+    ```
+3.  **Lancer l'application** :
     ```bash
     make docker-run
     ```
-    *(Cette commande construit l'image et lance l'API + l'Interface sur les ports 8000 et 8501)*
+    *(Cette commande lance l'API + l'Interface sur les ports 8000 et 8501)*
 
 ### Option B : Installation Locale (Développement)
 Pour les développeurs souhaitant modifier le code ou exécuter les tests.
