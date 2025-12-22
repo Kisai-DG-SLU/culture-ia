@@ -52,7 +52,17 @@ Nous avons dû configurer finement les appels API pour forcer la récupération 
 Cette approche a permis de passer de 0 événement pertinent récupéré à une base de données à jour contenant les événements programmés jusqu'en 2026.
 
 ### Optimisation de la précision et de la fidélité
-Avec une base de données très restreinte (POC), le défi était d'éviter que le LLM ne "s'égare" dans les détails techniques (dates multiples). L'augmentation du `chunk_size` à 4000 a permis de garder l'unité sémantique des événements, tandis qu'un prompt plus strict a permis de remonter la fidélité de 74% à 82%.
+Pour garantir une expérience utilisateur fiable, nous avons implémenté deux stratégies d'optimisation avancées :
+
+1.  **Stratégie "Small-to-Big Retrieval" Temporelle** : 
+    - Le moteur de recherche vectoriel utilise un champ `text` dense contenant le titre, la description et **l'intégralité des dates futures** de l'événement. Cela permet une recherche sémantique et par mots-clés infaillible sur n'importe quelle session programmée (ex: "événements en juillet 2026").
+    - Le LLM reçoit quant à lui le `full_context` stocké dans les métadonnées, contenant l'intégralité des dates formatées (Passé et Futur).
+
+2.  **Gestion Rigoureuse des Hallucinations Temporelles** :
+    - Le processeur de données classe désormais explicitement les dates en deux catégories : **"DATES À VENIR"** et **"ARCHIVES"**.
+    - Le Prompt système du RAG a été durci pour interdire formellement l'utilisation des archives et forcer la comparaison avec la date système courante fournie dynamiquement à chaque requête.
+
+Ces ajustements ont permis d'éliminer les hallucinations où le bot proposait des dates passées ou inventait des créneaux inexistants.
 
 ## 6. Déploiement
 Le système est entièrement conteneurisé via **Docker**.
