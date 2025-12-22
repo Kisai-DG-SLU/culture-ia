@@ -32,6 +32,11 @@ Ce document sert de support pour la présentation orale (slides) et détaille le
 ## Slide 3 : La Solution Technique : Architecture RAG
 *(Schéma d'architecture à afficher)*
 
+**[IMAGE SUGGÉRÉE : Diagramme de flux horizontal]**
+*   **Gauche** : Logo OpenAgenda -> (Flèche "ETL") -> Script Python
+*   **Centre** : Base FAISS (Icône Base de données) + LLM Mistral (Icône Cerveau/Robot)
+*   **Droite** : Utilisateur -> (Flèche "Question") -> Interface Streamlit -> (Flèche "Réponse")
+
 **Fonctionnement global :**
 1.  **Collecte (ETL)** : Récupération des événements depuis l'API OpenAgenda.
 2.  **Vectorisation** : Transformation des textes en vecteurs mathématiques (Embeddings) stockés dans **FAISS**.
@@ -44,6 +49,13 @@ Ce document sert de support pour la présentation orale (slides) et détaille le
 
 ## Slide 4 : Choix Technologiques (Stack)
 Pourquoi ces choix ?
+
+**[IMAGE SUGGÉRÉE : Mosaïque de Logos]**
+*   **Python** (Le socle)
+*   **Conda** (L'environnement robuste)
+*   **LangChain** (L'orchestrateur)
+*   **FastAPI** (Le moteur API)
+*   **Streamlit** (Le cockpit)
 
 - **Python 3.10** : Standard actuel pour l'IA/Data.
 - **Mistral AI (`mistral-tiny`)** :
@@ -61,6 +73,10 @@ Pourquoi ces choix ?
 2.  **Filtrage** : Exclusion des événements passés (> 1 an).
 3.  **Indexation** : Création des embeddings.
 
+**[IMAGE SUGGÉRÉE : Capture d'écran ou Schéma "Timeline"]**
+*   Montrer une ligne de temps avec "Passé (Archives)", "Aujourd'hui", "Futur (Prochains événements)".
+*   Mettre en évidence le filtre qui sélectionne les événements futurs.
+
 **Focus Challenge Technique (La gestion du temps) :**
 - *Problème* : L'API OpenAgenda, par défaut, masque les horaires et priorise les vieux événements, rendant le RAG obsolète.
 - *Solution* : Configuration avancée de l'API (`includeFields[]=timings`, `relative[]=current,upcoming`) pour forcer la récupération des événements futurs (2025-2026).
@@ -69,6 +85,10 @@ Pourquoi ces choix ?
 
 ## Slide 6 : Démonstration (Cockpit de Pilotage)
 *(Transition vers la démo live de l'interface Streamlit)*
+
+**[IMAGE SUGGÉRÉE : Capture d'écran de l'interface Streamlit complète]**
+*   Montrer les 3 onglets (Assistant, Admin, Perf)
+*   Une bulle de chat avec une réponse pertinente.
 
 Nous allons utiliser le **Cockpit IA** développé pour ce POC :
 
@@ -84,6 +104,12 @@ Nous allons utiliser le **Cockpit IA** développé pour ce POC :
 
 ## Slide 7 : Résultats & Évaluation
 Comment mesurer la qualité ? Utilisation de la librairie **Ragas**.
+
+**[IMAGE SUGGÉRÉE : Graphique Radar (Spider Plot)]**
+*   Axe 1 : Fidélité (82%)
+*   Axe 2 : Pertinence (73%)
+*   Axe 3 : Rappel (75%)
+*   Axe 4 : Précision (50%)
 
 **Métriques Clés (sur jeu de test) :**
 - **Fidélité (Faithfulness) : ~82%** (Optimisé via prompt strict)
