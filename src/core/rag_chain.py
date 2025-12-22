@@ -1,6 +1,6 @@
 import os
 import locale
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from langchain_mistralai import ChatMistralAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -35,26 +35,46 @@ class RAGChain:
         # Température à 0 pour une fidélité maximale aux données
         return ChatMistralAI(api_key=mistral_key, model="mistral-tiny", temperature=0)
 
+    def _get_weekend_dates(self, _):
+        """Calcule les dates du prochain week-end (Samedi et Dimanche)."""
+        now = datetime.now()
+        # 5 = Samedi, 6 = Dimanche
+        days_ahead = 5 - now.weekday()
+        if days_ahead <= 0:  # Si on est samedi (0) ou dimanche (-1)
+            # Dimanche -> Samedi prochain (ou on considère le WE actuel fini ?)
+            # Simplification : Si Dimanche, on donne le WE prochain
+            if days_ahead < 0:
+                days_ahead += 7
+
+        if now.weekday() >= 5:  # Si on est déjà le WE
+            # On donne les dates du WE en cours pour être pertinent
+            saturday = now - timedelta(days=now.weekday() - 5)
+        else:
+            saturday = now + timedelta(days=days_ahead)
+
+        sunday = saturday + timedelta(days=1)
+        return f"Samedi {saturday.strftime('%d/%m')} et Dimanche {sunday.strftime('%d/%m')}"
+
     def _get_prompt_template(self):
         template = """
-        Tu es Sophia, l'assistante experte en événements culturels pour Puls-Events.
+        Tu es l'assistant expert en événements culturels pour Puls-Events.
         Nous sommes le : {current_date}.
+        Pour info, le prochain week-end est : {weekend_dates}.
         
         CONSIGNES STRICTES :
         1. **ANALYSE L'INTENTION** :
-           - Si l'utilisateur dit simplement "Bonjour", "Salut", "Coucou" ou demande comment tu vas **SANS** poser de question spécifique :
-             Réponds chaleureusement, présente-toi brièvement et demande quel type de sortie il recherche.
-             **NE LISTE PAS D'ÉVÉNEMENTS DANS CE CAS.**
-           - Si l'utilisateur pose une question ou cherche une sortie, passe à l'étape 2.
+           - Si l'utilisateur dit simplement "Bonjour", "Salut" (Salutations pures) :
+             Réponds poliment, présente-toi comme l'assistant Puls-Events, et demande ce qu'il cherche.
+             **NE PROPOSE AUCUN ÉVÉNEMENT.**
+           - Sinon, passe à l'étape 2.
 
         2. **RECOMMANDATION (Uniquement si demandé)** :
-           - Tu dois RECOMMANDER uniquement des événements dont la date est FUTURE ou AUJOURD'HUI par rapport à la date actuelle ({current_date}).
+           - Tu dois RECOMMANDER uniquement des événements dont la date est FUTURE ou AUJOURD'HUI.
            - REGARDE la section "Détail des dates" dans le contexte.
-             - Si une date est sous "ARCHIVES" ou "DATES PASSÉES", IGNORE-LA.
-             - Si une date est sous "DATES À VENIR", tu peux la proposer.
-           - Si l'utilisateur demande "ce week-end", calcule la date du prochain samedi/dimanche et vérifie si elle est listée.
-           - NE JAMAIS inventer de dates. Si aucune date future ne correspond, dis clairement : "Je n'ai pas trouvé d'événement pour cette date."
-           - Sois précis : donne le jour, le numéro et le mois (ex: "Lundi 22 Décembre").
+             - Si une date est sous "ARCHIVES", C'EST INTERDIT.
+             - Si une date est sous "DATES À VENIR", c'est autorisé.
+           - Si l'utilisateur demande "ce week-end", cherche EXACTEMENT les dates {weekend_dates} dans la liste.
+           - **INTERDICTION TOTALE D'INVENTER DES DATES.** Si la date demandée n'est pas écrite NOIR SUR BLANC dans "Détail des dates", dis que tu n'as rien trouvé.
 
         CONTEXTE :
         {context}
@@ -88,6 +108,7 @@ class RAGChain:
                 "context": self.retriever | self._format_docs,
                 "question": RunnablePassthrough(),
                 "current_date": self._get_current_date,
+                "weekend_dates": self._get_weekend_dates,
             }
             | self.prompt
             | self.llm
