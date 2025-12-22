@@ -21,6 +21,10 @@ else
     echo "✅ Index FAISS trouvé."
 fi
 
-# Lancement de l'API
+# Lancement de l'API en background
 echo "🚀 Lancement de l'API..."
-exec python src/main.py
+uvicorn src.api.app:app --host 0.0.0.0 --port 8000 &
+
+# Lancement du Frontend
+echo "🎨 Lancement du Frontend Streamlit..."
+streamlit run src/frontend/ui.py --server.port 8501 --server.address 0.0.0.0

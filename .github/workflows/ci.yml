@@ -22,25 +22,33 @@ jobs:
       with:
         fetch-depth: 0 # Nécessaire pour le merge et les tags
 
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v5
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: "3.10"
+        auto-update-conda: true
+        python-version: 3.10
+        activate-environment: culture-ia
+        environment-file: environment.yml
+        auto-activate-base: false
 
-    - name: Install dependencies
+    - name: Verify Environment
+      shell: bash -l {0}
       run: |
-        python -m pip install --upgrade pip
-        make install
+        conda info
+        conda list
 
     - name: Check Code Format (Black)
+      shell: bash -l {0}
       run: |
         make format
         git diff --exit-code || (echo "❌ Code not formatted." && exit 1)
 
     - name: Linting
+      shell: bash -l {0}
       run: make lint || echo "⚠️ Lint warnings"
 
     - name: Run Tests with Coverage Gate (70%)
+      shell: bash -l {0}
       env:
         # Secrets mockés ou réels selon besoin
         MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}

@@ -27,7 +27,7 @@ else
 endif
 
 install:
-	$(PIP) install -r requirements.txt
+	conda env update -f environment.yml --prune
 
 test:
 	PYTHONPATH=. $(PYTEST) tests/
@@ -40,6 +40,9 @@ format:
 run:
 	PYTHONPATH=. $(PYTHON) src/main.py
 
+frontend:
+	PYTHONPATH=. $(VENV_DIR)/bin/streamlit run src/frontend/ui.py
+
 evaluate:
 	PYTHONPATH=. $(PYTHON) src/core/evaluator.py
 
@@ -50,7 +53,7 @@ docker-build:
 	docker build -t culture-ia .
 
 docker-run:
-	docker run -p 8000:8000 --env-file .env culture-ia
+	docker run -p 8000:8000 -p 8501:8501 --env-file .env culture-ia
 
 save-brain:
 	@echo "🧠 Sauvegarde Stealth vers Guesdon-Brain..."
