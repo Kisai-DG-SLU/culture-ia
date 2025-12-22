@@ -11,7 +11,12 @@ Culture IA est un assistant intelligent (RAG) développé pour **Puls-Events**. 
 
 ## 🚀 Installation & Démarrage
 
-Vous avez deux options pour lancer le projet.
+### 0. Configuration (Indispensable)
+Avant de lancer l'application, vous devez configurer vos accès API :
+1. Copiez le fichier d'exemple : `cp .env.template .env`
+2. Éditez le fichier `.env` et renseignez vos clés :
+   - `MISTRAL_API_KEY` : Obtenue sur [console.mistral.ai](https://console.mistral.ai/)
+   - `OPENAGENDA_API_KEY` : Obtenue sur [openagenda.com](https://openagenda.com/settings/apikeys) (nécessaire pour la collecte des données).
 
 ### Option A : Via Docker (Recommandé pour la démo)
 C'est la méthode la plus simple et la plus fiable.
