@@ -1,4 +1,6 @@
 import os
+import locale
+from datetime import datetime
 from dotenv import load_dotenv
 from langchain_mistralai import ChatMistralAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -7,6 +9,12 @@ from langchain_core.output_parsers import StrOutputParser
 from src.core.vectorstore import VectorStoreManager
 
 load_dotenv()
+
+# Essayer de mettre la locale en français pour la date, sinon défaut
+try:
+    locale.setlocale(locale.LC_TIME, "fr_FR.UTF-8")
+except locale.Error:
+    pass  # On reste sur la locale par défaut si fr_FR n'est pas dispo
 
 
 class RAGChain:
@@ -27,9 +35,12 @@ class RAGChain:
     def _get_prompt_template(self):
         template = """
         Tu es un assistant expert en événements culturels pour Puls-Events.
+        Nous sommes le : {current_date}.
+        
         Utilise EXCLUSIVEMENT les éléments de contexte suivants pour répondre à la question de l'utilisateur.
         
         Si les informations ne sont pas dans le contexte, dis poliment que tu n'as pas l'information dans ta base de données actuelle.
+        Pour les questions temporelles (prochains, ce week-end...), utilise la date actuelle pour filtrer ce qui est passé.
         N'invente JAMAIS de détails.
 
         Contexte:
@@ -41,6 +52,10 @@ class RAGChain:
         """
         return ChatPromptTemplate.from_template(template)
 
+    def _get_current_date(self, _):
+        """Retourne la date actuelle formatée."""
+        return datetime.now().strftime("%A %d %B %Y")
+
     def _format_docs(self, docs):
         return "\n\n".join(doc.page_content for doc in docs)
 
@@ -51,12 +66,23 @@ class RAGChain:
             {
                 "context": retriever | self._format_docs,
                 "question": RunnablePassthrough(),
+                "current_date": self._get_current_date,
             }
             | self.prompt
             | self.llm
             | StrOutputParser()
         )
         return chain
+
+    def ask(self, query: str):
+        return self.chain.invoke(query)
+
+
+if __name__ == "__main__":
+    rag = RAGChain()
+    response = rag.ask("Quels sont les événements sur la cuisine sauvage ?")
+    print("Question: Quels sont les événements sur la cuisine sauvage ?")
+    print(f"Réponse: {response}")
 
     def ask(self, query: str):
         return self.chain.invoke(query)
