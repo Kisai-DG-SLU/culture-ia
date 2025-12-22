@@ -2,7 +2,7 @@ import os
 import json
 from dotenv import load_dotenv
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 from langchain_mistralai import MistralAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -17,12 +17,17 @@ class VectorStoreManager:
 
     def _get_embeddings(self):
         mistral_key = os.getenv("MISTRAL_API_KEY")
-        if mistral_key and mistral_key != "votre_cle_mistral_ici":
+        if (
+            mistral_key
+            and mistral_key != "votre_cle_mistral_ici"
+            and mistral_key.lower() != "none"
+        ):
             print("Using Mistral AI Embeddings")
             return MistralAIEmbeddings(api_key=mistral_key)
 
         print(
-            "MISTRAL_API_KEY not found or default. Falling back to Sentence-Transformers (Local)."
+            "MISTRAL_API_KEY not found, invalid, or set to 'none'. "
+            "Falling back to Sentence-Transformers (Local)."
         )
         return HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 

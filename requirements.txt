@@ -13,6 +13,7 @@ pylint
 langchain
 langchain-community
 langchain-mistralai
+langchain-huggingface
 faiss-cpu
 mistralai
 sentence-transformers
