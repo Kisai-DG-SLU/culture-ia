@@ -22,8 +22,20 @@ class RAGEvaluator:
         self.llm = ChatMistralAI(api_key=self.mistral_key, model="mistral-large-latest")
         self.embeddings = MistralAIEmbeddings(api_key=self.mistral_key)
 
+        # Définition du chemin racine du projet
+        self.project_root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../../..")
+        )
+
     def prepare_dataset(self, test_file="tests/evaluation_dataset.json"):
-        with open(test_file, "r", encoding="utf-8") as f:
+        # Construction du chemin absolu
+        abs_test_file = os.path.join(self.project_root, test_file)
+
+        if not os.path.exists(abs_test_file):
+            # Fallback : essayer un chemin relatif si le chemin absolu échoue (cas de tests locaux)
+            abs_test_file = test_file
+
+        with open(abs_test_file, "r", encoding="utf-8") as f:
             test_data = json.load(f)
 
         questions = []
@@ -75,7 +87,7 @@ class RAGEvaluator:
         print(result)
 
         # Save results
-        output_file = "data/evaluation_results.json"
+        output_file = os.path.join(self.project_root, "data/evaluation_results.json")
 
         # Convert Ragas Result object to a dictionary of scores
         # Depending on Ragas version, result might behave like a dict-like object
