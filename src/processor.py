@@ -14,8 +14,10 @@ class EventProcessor:
 
     def _parse_timings(self, timings):
         """Parse timings to extract formatted dates and timestamps."""
-        dates_list = []
         timestamps = []
+        dates_objects = []
+        now = datetime.now().astimezone()
+
         for timing in timings:
             try:
                 begin_str = timing.get("begin")
@@ -23,15 +25,40 @@ class EventProcessor:
                 if begin_str and end_str:
                     dt_begin = datetime.fromisoformat(begin_str)
                     dt_end = datetime.fromisoformat(end_str)
-                    dates_list.append(
-                        f"Du {dt_begin.strftime('%d/%m/%Y à %H:%M')} "
-                        f"au {dt_end.strftime('%d/%m/%Y à %H:%M')}"
-                    )
                     timestamps.append(dt_begin.timestamp())
                     timestamps.append(dt_end.timestamp())
-            except ValueError:
+                    dates_objects.append(dt_begin)
+            except (ValueError, TypeError):
                 continue
-        return dates_list, timestamps
+
+        # Tri chronologique absolu
+        dates_objects.sort()
+
+        # Séparation Passé / Futur pour la clarté du contexte LLM
+        # (Sans supprimer l'historique requis par les specs)
+        future_dates = [d for d in dates_objects if d >= now]
+        past_dates = [d for d in dates_objects if d < now]
+
+        formatted_parts = []
+
+        if future_dates:
+            formatted_parts.append("DATES À VENIR :")
+            formatted_parts.extend(
+                [f"- Le {d.strftime('%d/%m/%Y à %H:%M')}" for d in future_dates]
+            )
+
+        if past_dates:
+            formatted_parts.append("\nARCHIVES (DATES PASSÉES) :")
+            # On affiche les plus récentes du passé en premier
+            formatted_parts.extend(
+                [f"- Le {d.strftime('%d/%m/%Y à %H:%M')}" for d in reversed(past_dates)]
+            )
+
+        # Si aucune date n'est trouvée
+        if not formatted_parts:
+            return ["Date non spécifiée"], timestamps
+
+        return formatted_parts, timestamps
 
     def _create_metadata(
         self,
@@ -118,6 +145,7 @@ class EventProcessor:
 
             # Extraction des dates via helper
             dates_list, timestamps = self._parse_timings(event.get("timings", []))
+
             full_dates_str = (
                 "\n".join(dates_list) if dates_list else "Date non spécifiée"
             )
