@@ -102,6 +102,7 @@ class RAGEvaluator:
             print(f"Warning: Could not convert result directly: {e}")
             scores = str(result)  # Fallback
 
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(scores, f, ensure_ascii=False, indent=4)
         print(f"Results saved to {output_file}")
