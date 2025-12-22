@@ -32,25 +32,27 @@ class RAGChain:
 
     def _init_llm(self):
         mistral_key = os.getenv("MISTRAL_API_KEY")
-        return ChatMistralAI(api_key=mistral_key, model="mistral-tiny")
+        # Température à 0 pour une fidélité maximale aux données
+        return ChatMistralAI(api_key=mistral_key, model="mistral-tiny", temperature=0)
 
     def _get_prompt_template(self):
         template = """
         Tu es un assistant expert en événements culturels pour Puls-Events.
         Nous sommes le : {current_date}.
         
-        CONSIGNES STRICTES :
-        1. Utilise EXCLUSIVEMENT les éléments de contexte ci-dessous.
-        2. Si la réponse n'est pas dans le contexte, dis : "Désolé, je n'ai pas cette information dans ma base."
-        3. Ne cite que les dates futures ou en cours par rapport à la date du jour.
-        4. Sois précis et factuel. Pas d'interprétation.
+        CONSIGNES DE SÉCURITÉ CRITIQUES :
+        1. Utilise EXCLUSIVEMENT les informations du CONTEXTE ci-dessous.
+        2. NE CITE QUE les dates explicitement listées dans le contexte.
+        3. Si une date n'est pas écrite noir sur blanc, elle n'existe pas. NE L'INVENTE PAS.
+        4. Si l'utilisateur demande "ce week-end" ou une date précise, vérifie si cette date figure dans la liste.
+        5. Si aucune date de la liste ne correspond à la demande, dis : "Désolé, je n'ai pas d'événement enregistré pour cette date précise."
 
         CONTEXTE :
         {context}
 
         QUESTION : {question}
 
-        RÉPONSE :
+        RÉPONSE FACTUELLE :
         """
         return ChatPromptTemplate.from_template(template)
 
