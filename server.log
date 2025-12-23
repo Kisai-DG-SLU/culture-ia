@@ -1,0 +1,23 @@
+PYTHONPATH=. .venv_conda/bin/python src/main.py
+INFO:     Will watch for changes in these directories: ['/Users/daminou/Documents/Formation_IA/Projet_7/culture-ia']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [11625] using WatchFiles
+Lancement de l'API Culture IA...
+INFO:     Started server process [11627]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Using Mistral AI Embeddings
+✅ Filtrage temporel activé (365 jours) : 2/2 événements conservés.
+Saved 2 events to data/raw_events.json
+Processed 2 events and saved to data/processed_events.json
+Using Mistral AI Embeddings
+Split 2 events into 2 chunks.
+Index created and saved to data/faiss_index
+Using Mistral AI Embeddings
+INFO:     127.0.0.1:52408 - "POST /rebuild HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52426 - "POST /ask HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11627]
+INFO:     Stopping reloader process [11625]
