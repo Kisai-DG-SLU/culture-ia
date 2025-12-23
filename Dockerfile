@@ -1,3 +1,4 @@
+# Optimisation pour des builds Docker plus rapides et des images plus légères.
 # --- Étape 1: Le Constructeur ---
 # Utilise mambaforge pour créer l'environnement rapidement.
 # Cette étape contiendra tous les outils de build et sera lourde, mais temporaire.
