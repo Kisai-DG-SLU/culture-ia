@@ -1,7 +1,7 @@
 # --- Étape 1: Le Constructeur ---
 # Utilise mambaforge pour créer l'environnement rapidement.
 # Cette étape contiendra tous les outils de build et sera lourde, mais temporaire.
-FROM conda-forge/mambaforge AS builder
+FROM condaforge/mambaforge AS builder
 
 WORKDIR /app
 
