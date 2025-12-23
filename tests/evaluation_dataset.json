@@ -1,18 +1,22 @@
 [
     {
-        "question": "Quels sont les événements sur la cuisine sauvage ?",
-        "ground_truth": "Il y a deux événements principaux : une balade découverte et cuisine sauvage au Bois de Vincennes organisée par Natalia (4h30), et une introduction aux plantes sauvages à Vincennes organisée par Adeline (2h)."
+        "question": "Quels sont les thèmes des événements proposés ?",
+        "ground_truth": "L'agenda Puls-Events propose des activités autour de la nature et de la cuisine sauvage, notamment l'identification des plantes comestibles, des balades botaniques et des ateliers de cuisine végétale."
     },
     {
-        "question": "Où se déroule l'atelier de Natalia ?",
-        "ground_truth": "L'atelier de Natalia se déroule au Bois de Vincennes pour la balade, puis dans une cuisine à Vincennes à deux pas du métro Ligne 1."
+        "question": "Quels sont les événements prévus en janvier 2026 ?",
+        "ground_truth": "En janvier 2026, deux événements sont prévus : la 'Balade découverte et cuisine sauvage' le samedi 17 janvier 2026 et l' 'Introduction plantes sauvages - Vincennes' le samedi 24 janvier 2026."
     },
     {
-        "question": "Quelle est la durée de l'initiation avec Adeline ?",
-        "ground_truth": "L'initiation avec Adeline dure 2 heures."
+        "question": "Y a-t-il des animations en l'an 2030 ?",
+        "ground_truth": "Désolé, il n'y a aucune animation disponible pour la période demandée (2030). N'hésitez pas à me solliciter pour une autre date !"
     },
     {
-        "question": "Quel est le programme du cinéma Grand Rex ?",
-        "ground_truth": "Je n'ai pas l'information dans ma base de données actuelle."
+        "question": "Peux-tu me trouver une sortie à Lyon ?",
+        "ground_truth": "Je n'ai accès qu'aux événements de l'agenda Puls-Events (principalement localisés à Paris et Vincennes). Je ne peux pas vous renseigner sur d'autres localités comme Lyon."
+    },
+    {
+        "question": "Quel est le programme de cinéma pour demain ?",
+        "ground_truth": "Je suis désolé, mais cet agenda ne couvre pas le cinéma. Je suis spécialisé uniquement dans les événements culturels et nature de Puls-Events."
     }
 ]
