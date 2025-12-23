@@ -1,45 +1,41 @@
 # --- Étape 1: Le Constructeur ---
-# Utilise mambaforge pour créer l'environnement rapidement.
-# Cette étape contiendra tous les outils de build et sera lourde, mais temporaire.
-FROM condaforge/mambaforge AS builder
+FROM condaforge/mambaforge:latest AS builder
 
 WORKDIR /app
 
-# Copie uniquement le fichier de lock pour une mise en cache optimale
+# Copie le fichier de lock
 COPY conda-lock.yml .
 
-# Crée l'environnement à partir du fichier de lock
-# Le nom de l'environnement est crucial pour le retrouver plus tard
-RUN mamba create --name culture-ia --file conda-lock.yml && conda clean -afy
-
+# Installe conda-lock pour pouvoir utiliser le fichier de lock
+RUN mamba install conda-lock -y && \
+    conda-lock install --name culture-ia conda-lock.yml && \
+    conda clean -afy
 
 # --- Étape 2: L'Image Finale ---
-# Part d'une image miniconda légère qui ne contient que le strict nécessaire
-FROM continuumio/miniconda3
+FROM mambaorg/micromamba:latest
 
-# Le nom de l'environnement doit correspondre à celui créé dans l'étape 'builder'
-ENV ENV_NAME=culture-ia
-
-# Copie l'environnement Conda complet depuis l'étape 'builder'
-# C'est beaucoup plus rapide que de le recréer
-COPY --from=builder /opt/conda/envs/$ENV_NAME /opt/conda/envs/$ENV_NAME
+# Copie l'environnement depuis le builder
+COPY --from=builder /opt/conda/envs/culture-ia /opt/conda/envs/culture-ia
 
 WORKDIR /app
 
-# Activation de l'environnement par défaut dans le path
-ENV PATH=/opt/conda/envs/$ENV_NAME/bin:$PATH
+# Configuration de l'environnement
+ENV PATH=/opt/conda/envs/culture-ia/bin:$PATH
 ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
 
-# Copie le code de l'application
-# Cette couche sera la seule à être reconstruite lors des changements de code
+# Copie le reste de l'application
+COPY --from=builder /etc/ssl/certs /etc/ssl/certs
 COPY . .
 
-# Exposition des ports API et Streamlit
+# On s'assure que l'entrypoint est exécutable
+USER root
+RUN chmod +x entrypoint.sh
+
+# Repasse en utilisateur non-privilégié si nécessaire (micromamba utilise 'mambauser')
+USER $MAMBA_USER
+
 EXPOSE 8000
 EXPOSE 8501
-
-# Le script de démarrage n'a pas besoin d'être copié séparément s'il est dans le `.`
-# On s'assure qu'il est exécutable
-RUN chmod +x entrypoint.sh
 
 CMD ["./entrypoint.sh"]
