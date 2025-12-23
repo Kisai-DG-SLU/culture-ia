@@ -10,11 +10,14 @@ from src.core.vectorstore import VectorStoreManager
 
 load_dotenv()
 
-# Essayer de mettre la locale en français pour la date
+# Configuration locale pour le français
 try:
     locale.setlocale(locale.LC_TIME, "fr_FR.UTF-8")
 except locale.Error:
-    pass
+    try:
+        locale.setlocale(locale.LC_TIME, "fr_FR")
+    except locale.Error:
+        pass
 
 
 class RAGChain:
@@ -24,7 +27,6 @@ class RAGChain:
         if self.vectorstore is None:
             raise ValueError("Vector store not found. Please run vectorstore.py first.")
 
-        # K=3 pour avoir un peu plus de contexte pour filtrer géographiquement si besoin
         self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
         self.llm = self._init_llm()
         self.prompt = self._get_prompt_template()
@@ -35,65 +37,47 @@ class RAGChain:
         return ChatMistralAI(api_key=mistral_key, model="mistral-tiny", temperature=0)
 
     def _get_date_range_from_query(self, query: str):
-        """Extrait une intention de date (demain, ce week-end) de la requête."""
         now = datetime.now()
         query_lower = query.strip().lower()
 
-        # Détection de salutation simple (sans demande d'info)
+        # Salutations
         greetings = ["bonjour", "salut", "coucou", "hello", "bonsoir", "merci"]
-        # Si la requête est juste un mot de salutation ou très courte
         if query_lower in greetings or len(query_lower.split()) <= 1:
-            return {
-                "type": "greeting",
-                "start_ts": None,
-                "end_ts": None,
-                "display": "Salutation",
-            }
+            return {"type": "greeting", "display": "Salutation"}
 
-        # Pour 'demain'
+        # Demain
         if "demain" in query_lower:
             tomorrow = now + timedelta(days=1)
             return {
                 "type": "day",
-                "start_ts": tomorrow.replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                ).timestamp(),
-                "end_ts": tomorrow.replace(
-                    hour=23, minute=59, second=59, microsecond=999999
-                ).timestamp(),
+                "start_ts": tomorrow.replace(hour=0, minute=0, second=0).timestamp(),
+                "end_ts": tomorrow.replace(hour=23, minute=59, second=59).timestamp(),
                 "display": tomorrow.strftime("%A %d %B %Y"),
             }
 
-        # Pour 'ce week-end'
-        if "ce week-end" in query_lower or "ce weekend" in query_lower:
-            # En Python : Lundi=0 ... Dimanche=6
-            weekday = now.weekday()
-
-            # Calcul du Samedi de la semaine courante
-            # Si on est Dimanche (6), le Samedi était hier (-1 jour)
-            # Si on est Samedi (5), c'est aujourd'hui
-            # Si on est Vendredi (4), c'est demain (+1)
-            days_until_saturday = 5 - weekday
-
-            # Cas particulier du Dimanche soir : "Ce week-end" réfère souvent au WE qui se termine
-            # Mais si on est Lundi, "Ce week-end" réfère au suivant.
-            # Logique simple : On prend le Samedi et Dimanche de la semaine ISO courante.
-
-            saturday = (now + timedelta(days=days_until_saturday)).replace(
-                hour=0, minute=0, second=0, microsecond=0
+        # Ce week-end (Samedi et Dimanche de la semaine ISO courante)
+        if (
+            "ce week-end" in query_lower
+            or "ce weekend" in query_lower
+            or "ce we" in query_lower
+        ):
+            # On cherche le samedi (5) de la semaine actuelle
+            days_to_saturday = 5 - now.weekday()
+            saturday = (now + timedelta(days=days_to_saturday)).replace(
+                hour=0, minute=0, second=0
             )
             sunday = (saturday + timedelta(days=1)).replace(
-                hour=23, minute=59, second=59, microsecond=999999
+                hour=23, minute=59, second=59
             )
 
             return {
                 "type": "weekend",
                 "start_ts": saturday.timestamp(),
                 "end_ts": sunday.timestamp(),
-                "display": f"Samedi {saturday.strftime('%d/%m')} et Dimanche {sunday.strftime('%d/%m')}",
+                "display": f"le week-end du {saturday.strftime('%d/%m')} au {sunday.strftime('%d/%m')}",
             }
 
-        # Défaut : Futur
+        # Défaut
         return {
             "type": "any_future",
             "start_ts": now.timestamp(),
@@ -102,99 +86,75 @@ class RAGChain:
         }
 
     def _filter_retrieved_docs(self, docs: list, date_context: dict):
-        """Filtre les documents par date de session précise."""
         if date_context.get("type") == "greeting":
             return []
 
         start_ts = date_context.get("start_ts", 0)
         end_ts = date_context.get("end_ts", float("inf"))
 
-        filtered_docs = []
+        filtered = []
         for doc in docs:
-            # On vérifie les sessions individuelles si elles existent
             sessions = doc.metadata.get("all_sessions_ts", [])
-
             if sessions:
-                # Un événement est valide si AU MOINS une session est dans la plage
-                has_valid_session = any(start_ts <= ts <= end_ts for ts in sessions)
-                if has_valid_session:
-                    filtered_docs.append(doc)
+                if any(start_ts <= ts <= end_ts for ts in sessions):
+                    filtered.append(doc)
             else:
-                # Fallback sur la plage globale si pas de sessions détaillées (ancien index)
-                event_start_ts = doc.metadata.get("start_ts", 0)
-                event_end_ts = doc.metadata.get("end_ts", float("inf"))
-                if event_start_ts <= end_ts and event_end_ts >= start_ts:
-                    filtered_docs.append(doc)
-        return filtered_docs
+                # Fallback plage globale
+                e_start = doc.metadata.get("start_ts", 0)
+                e_end = doc.metadata.get("end_ts", float("inf"))
+                if e_start <= end_ts and e_end >= start_ts:
+                    filtered.append(doc)
+        return filtered
 
     def _get_prompt_template(self):
         template = """
-        Tu es l'assistant officiel de l'agenda **Puls-Events**.
-        Date système : {current_date}.
-        
-        TES RESPONSABILITÉS :
-        1. **FILTRE HORS-SUJET / HORS-SCOPE** :
-           - Tu ne connais QUE les événements fournis dans le CONTEXTE ci-dessous.
-           - Si l'utilisateur demande des événements dans une **Ville** (ex: Lyon, Bordeaux) qui n'est pas mentionnée dans le CONTEXTE : Réponds que tu ne gères pas l'agenda de cette ville.
-           - Si l'utilisateur demande un **Thème** (ex: Cinéma, Foot) qui n'est pas dans le CONTEXTE : Réponds que cet agenda ne couvre pas ce type d'activité.
-           - Si la question est générale (Chit-chat, salutations) : Réponds poliment et propose ton aide pour trouver une sortie culturelle.
+        Tu es l'assistant de l'agenda Puls-Events.
+        Nous sommes aujourd'hui le : {current_date}.
 
-        2. **RÉPONSE FACTUELLE SUR LES ÉVÉNEMENTS** :
-           - Utilise **uniquement** les informations du CONTEXTE.
-           - Si le CONTEXTE est vide après filtrage (indiqué par "Aucun événement trouvé...") : Dis simplement que tu n'as pas d'événements pour cette recherche spécifique (date/lieu/thème). **N'INVENTE RIEN.**
-           - Si tu as des événements : Présente-les avec leur Titre, Lieu, et Date précise.
+        REGLES CRITIQUES :
+        1. Si le CONTEXTE contient "AUCUN ÉVÉNEMENT TROUVÉ", réponds : "Désolé, il n'y a aucune animation disponible pour [la période demandée]. N'hésitez pas à me solliciter pour une autre date !"
+        2. NE JAMAIS INVENTER DE DATE. Si l'utilisateur demande "ce week-end", et qu'il n'y a rien, dis qu'il n'y a rien.
+        3. Si la question est une salutation simple, réponds : "Bonjour ! Je suis l'assistant Puls-Events. Comment puis-je vous aider dans votre recherche de sorties ?"
+        4. Si la question porte sur une ville absente du contexte (ex: Lyon), réponds : "Je n'ai accès qu'aux événements de l'agenda Puls-Events (principalement Paris/Vincennes). Je ne peux pas vous renseigner sur d'autres localités."
 
-        CONTEXTE (Événements filtrés) :
+        CONTEXTE :
         {context}
 
-        QUESTION UTILISATEUR : {question}
+        QUESTION : {question}
 
-        TA RÉPONSE :
+        RÉPONSE :
         """
         return ChatPromptTemplate.from_template(template)
 
     def _get_current_date(self, _):
         return datetime.now().strftime("%A %d %B %Y")
 
-    def _format_docs(self, docs: list[dict], date_context: dict):
-        unique_docs = {}
-        for doc in docs:
-            url = doc.metadata.get("url")
-            content = doc.metadata.get("full_context", doc.page_content)
-            if url:
-                unique_docs[url] = content
-            else:
-                unique_docs[content] = content
-
-        if not unique_docs:
+    def _format_docs(self, docs: list, date_context: dict):
+        if not docs:
             period = date_context.get("display", "")
-            if period:
-                return f"Aucun événement trouvé pour la période : {period}."
-            return "Aucun événement correspondant aux critères trouvés dans la base."
+            return f"AUCUN ÉVÉNEMENT TROUVÉ POUR {period.upper() if period else 'CETTE RECHERCHE'}."
 
-        return "\n\n".join(unique_docs.values())
+        unique_contents = {
+            doc.metadata.get("url")
+            or doc.page_content: doc.metadata.get("full_context", doc.page_content)
+            for doc in docs
+        }
+        return "\n\n---\n\n".join(unique_contents.values())
 
     def _build_chain(self):
-        # 1. Analyse date
-        date_context_extractor = RunnablePassthrough.assign(
-            date_context=lambda x: self._get_date_range_from_query(x["question"])
-        )
-
-        # 2. Retrieval + Filtrage Python
-        filtered_retriever_step = RunnablePassthrough.assign(
-            retrieved_docs=lambda x: self._filter_retrieved_docs(
-                self.retriever.invoke(x["question"]),
-                x["date_context"],
-            )
-        )
-
         chain = (
             {
                 "question": RunnablePassthrough(),
                 "current_date": self._get_current_date,
             }
-            | date_context_extractor
-            | filtered_retriever_step
+            | RunnablePassthrough.assign(
+                date_context=lambda x: self._get_date_range_from_query(x["question"])
+            )
+            | RunnablePassthrough.assign(
+                retrieved_docs=lambda x: self._filter_retrieved_docs(
+                    self.retriever.invoke(x["question"]), x["date_context"]
+                )
+            )
             | {
                 "context": lambda x: self._format_docs(
                     x["retrieved_docs"], x["date_context"]
@@ -213,6 +173,6 @@ class RAGChain:
 
 
 if __name__ == "__main__":
-    # Test rapide
-    chain = RAGChain()
-    print("Test WE:", chain.ask("C'est quoi les sorties ce week-end ?"))
+    rag = RAGChain()
+    print(rag.ask("Bonjour"))
+    print(rag.ask("C'est quoi les sorties ce week-end ?"))
