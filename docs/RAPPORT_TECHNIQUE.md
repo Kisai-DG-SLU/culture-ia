@@ -73,11 +73,23 @@ Pour garantir une expérience utilisateur fiable, nous avons implémenté deux s
     - Le moteur de recherche vectoriel utilise un champ `text` dense contenant le titre, la description et **l'intégralité des dates futures** de l'événement. Cela permet une recherche sémantique et par mots-clés infaillible sur n'importe quelle session programmée (ex: "événements en juillet 2026").
     - Le LLM reçoit quant à lui le `full_context` stocké dans les métadonnées, contenant l'intégralité des dates formatées (Passé et Futur).
 
-2.  **Gestion Rigoureuse des Hallucinations Temporelles** :
-    - Le processeur de données classe désormais explicitement les dates en deux catégories : **"DATES À VENIR"** et **"ARCHIVES"**.
-    - Le Prompt système du RAG a été durci pour interdire formellement l'utilisation des archives et forcer la comparaison avec la date système courante fournie dynamiquement à chaque requête.
+### Gestion Rigoureuse des Hallucinations Temporelles
+- Le processeur de données classe désormais explicitement les dates en deux catégories : **"DATES À VENIR"** et **"ARCHIVES"**.
+- Le Prompt système du RAG a été durci pour interdire formellement l'utilisation des archives et forcer la comparaison avec la date système courante fournie dynamiquement à chaque requête.
 
 Ces ajustements ont permis d'éliminer les hallucinations où le bot proposait des dates passées ou inventait des créneaux inexistants.
+
+### Choix Architectural : Approche Hybride (Déterministe + Probabiliste)
+Pour la gestion des requêtes temporelles ('ce week-end', 'mois prochain'), nous avons opté pour une approche **hybride** plutôt que purement générative (Agent) :
+
+1.  **Parsing Déterministe (Python)** : La détection de l'intention temporelle et le calcul des dates sont gérés par du code Python strict.
+    -   *Avantage* : Précision mathématique infaillible (gestion des années bissextiles, semaines ISO, etc.).
+    -   *Avantage* : Sécurité (pas d'injection possible via la date).
+2.  **Filtrage en Amont** : Les documents sont filtrés AVANT d'être envoyés au LLM.
+    -   *Avantage* : Réduction drastique des hallucinations. Le LLM ne voit jamais d'événements hors-sujet, donc il ne peut pas se tromper en les recommandant.
+3.  **Synthèse Probabiliste (LLM)** : Le modèle ne sert qu'à formuler la réponse finale et gérer la conversation.
+
+Cette architecture a été préférée à une approche 'Agent autonome' (Tool Calling) pour ce POC afin de garantir une **stabilité maximale** et une **faible latence**, essentielles pour une application de recommandation grand public.
 
 ## 6. Déploiement
 Le système est entièrement conteneurisé via **Docker**.
@@ -93,16 +105,4 @@ Le système est entièrement conteneurisé via **Docker**.
 
 ---
 *Damien Guesdon - Data Scientist Freelance*
-
-### Choix Architectural : Approche Hybride (Déterministe + Probabiliste)
-Pour la gestion des requêtes temporelles ('ce week-end', 'mois prochain'), nous avons opté pour une approche **hybride** plutôt que purement générative (Agent) :
-
-1.  **Parsing Déterministe (Python)** : La détection de l'intention temporelle et le calcul des dates sont gérés par du code Python strict.
-    -   *Avantage* : Précision mathématique infaillible (gestion des années bissextiles, semaines ISO, etc.).
-    -   *Avantage* : Sécurité (pas d'injection possible via la date).
-2.  **Filtrage en Amont** : Les documents sont filtrés AVANT d'être envoyés au LLM.
-    -   *Avantage* : Réduction drastique des hallucinations. Le LLM ne voit jamais d'événements hors-sujet, donc il ne peut pas se tromper en les recommandant.
-3.  **Synthèse Probabiliste (LLM)** : Le modèle ne sert qu'à formuler la réponse finale et gérer la conversation.
-
-Cette architecture a été préférée à une approche 'Agent autonome' (Tool Calling) pour ce POC afin de garantir une **stabilité maximale** et une **faible latence**, essentielles pour une application de recommandation grand public.
 
