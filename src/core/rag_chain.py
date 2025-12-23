@@ -10,11 +10,11 @@ from src.core.vectorstore import VectorStoreManager
 
 load_dotenv()
 
-# Essayer de mettre la locale en français pour la date, sinon défaut
+# Essayer de mettre la locale en français pour la date
 try:
     locale.setlocale(locale.LC_TIME, "fr_FR.UTF-8")
 except locale.Error:
-    pass  # On reste sur la locale par défaut si fr_FR n'est pas dispo
+    pass
 
 
 class RAGChain:
@@ -24,26 +24,24 @@ class RAGChain:
         if self.vectorstore is None:
             raise ValueError("Vector store not found. Please run vectorstore.py first.")
 
-        # K=2 est le compromis idéal pour ce petit dataset (2 événements au total)
-        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 2})
+        # K=3 pour avoir un peu plus de contexte pour filtrer géographiquement si besoin
+        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
         self.llm = self._init_llm()
         self.prompt = self._get_prompt_template()
         self.chain = self._build_chain()
 
     def _init_llm(self):
         mistral_key = os.getenv("MISTRAL_API_KEY")
-        # Température à 0 pour une fidélité maximale aux données
         return ChatMistralAI(api_key=mistral_key, model="mistral-tiny", temperature=0)
 
     def _get_date_range_from_query(self, query: str):
-        """Extrait une intention de date (demain, ce week-end) de la requête et retourne une plage de timestamps."""
+        """Extrait une intention de date (demain, ce week-end) de la requête."""
         now = datetime.now()
         query_lower = query.lower()
 
         # Pour 'demain'
         if "demain" in query_lower:
             tomorrow = now + timedelta(days=1)
-            # La plage couvre toute la journée de demain
             return {
                 "type": "day",
                 "start_ts": tomorrow.replace(
@@ -55,28 +53,28 @@ class RAGChain:
                 "display": tomorrow.strftime("%A %d %B %Y"),
             }
 
-        # Pour 'ce week-end' ou 'ce weekend'
+        # Pour 'ce week-end'
         if "ce week-end" in query_lower or "ce weekend" in query_lower:
-            # Calcul du prochain samedi et dimanche à partir d'aujourd'hui
-            # Si on est Samedi, le WE commence aujourd'hui
-            # Si on est Dimanche, le WE commence hier (Samedi)
-            # Sinon, on prend le Samedi et Dimanche de la semaine prochaine
-            days_until_saturday = (5 - now.weekday() + 7) % 7  # 5 = Samedi
+            # En Python : Lundi=0 ... Dimanche=6
+            weekday = now.weekday()
 
-            if now.weekday() == 5:  # C'est Samedi
-                saturday = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            elif now.weekday() == 6:  # C'est Dimanche
-                saturday = (now - timedelta(days=1)).replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                )
-            else:  # Jour de semaine, on cherche le prochain Samedi
-                saturday = (now + timedelta(days=days_until_saturday)).replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                )
+            # Calcul du Samedi de la semaine courante
+            # Si on est Dimanche (6), le Samedi était hier (-1 jour)
+            # Si on est Samedi (5), c'est aujourd'hui
+            # Si on est Vendredi (4), c'est demain (+1)
+            days_until_saturday = 5 - weekday
 
+            # Cas particulier du Dimanche soir : "Ce week-end" réfère souvent au WE qui se termine
+            # Mais si on est Lundi, "Ce week-end" réfère au suivant.
+            # Logique simple : On prend le Samedi et Dimanche de la semaine ISO courante.
+
+            saturday = (now + timedelta(days=days_until_saturday)).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
             sunday = (saturday + timedelta(days=1)).replace(
                 hour=23, minute=59, second=59, microsecond=999999
             )
+
             return {
                 "type": "weekend",
                 "start_ts": saturday.timestamp(),
@@ -84,8 +82,7 @@ class RAGChain:
                 "display": f"Samedi {saturday.strftime('%d/%m')} et Dimanche {sunday.strftime('%d/%m')}",
             }
 
-        # Pour les requêtes générales ou sans intention de date spécifique, on donne une plage large (futur)
-        # La date de fin de l'événement doit être >= à maintenant (pour ne pas proposer du passé)
+        # Défaut : Futur
         return {
             "type": "any_future",
             "start_ts": now.timestamp(),
@@ -94,87 +91,80 @@ class RAGChain:
         }
 
     def _filter_retrieved_docs(self, docs: list, date_context: dict):
-        """Filtre les documents récupérés en fonction du contexte de date fourni par _get_date_range_from_query."""
-        start_ts = date_context.get(
-            "start_ts", 0
-        )  # Si pas de start_ts, on prend tout (ou 0 pour l'historique)
-        end_ts = date_context.get(
-            "end_ts", float("inf")
-        )  # Si pas d'end_ts, on prend tout le futur
+        """Filtre les documents par date."""
+        start_ts = date_context.get("start_ts", 0)
+        end_ts = date_context.get("end_ts", float("inf"))
 
         filtered_docs = []
         for doc in docs:
+            # Sécurité : vérifier que les métadonnées existent
             event_start_ts = doc.metadata.get("start_ts", 0)
             event_end_ts = doc.metadata.get("end_ts", float("inf"))
 
-            # Un événement est pertinent si sa période chevauche la période demandée
-            # Et que l'événement n'est pas entièrement dans le passé par rapport à la start_ts demandée
-            if event_end_ts >= start_ts and event_start_ts <= end_ts:
+            # Chevauchement des périodes :
+            # (Debut_Event <= Fin_Requete) ET (Fin_Event >= Debut_Requete)
+            if event_start_ts <= end_ts and event_end_ts >= start_ts:
                 filtered_docs.append(doc)
         return filtered_docs
 
     def _get_prompt_template(self):
         template = """
-        Tu es l'assistant expert en événements culturels pour Puls-Events.
-        Nous sommes le : {current_date}.
+        Tu es l'assistant officiel de l'agenda **Puls-Events**.
+        Date système : {current_date}.
         
-        CONSIGNES STRICTES :
-        1. **ANALYSE L'INTENTION ET RÉPONSE INITIALE** :
-           - Si la QUESTION est une simple salutation ("Bonjour", "Salut", "Coucou") **SANS AUTRE DEMANDE** :
-             Réponds poliment en tant qu'assistant Puls-Events et demande quel type de sortie l'utilisateur recherche.
-             **NE MENTIONNE AUCUN ÉVÉNEMENT NI AUCUNE DATE NON SOLLICITÉE.**
-           - Si la QUESTION CONTIENT une demande spécifique, passe à l'étape 2.
+        TES RESPONSABILITÉS :
+        1. **FILTRE HORS-SUJET / HORS-SCOPE** :
+           - Tu ne connais QUE les événements fournis dans le CONTEXTE ci-dessous.
+           - Si l'utilisateur demande des événements dans une **Ville** (ex: Lyon, Bordeaux) qui n'est pas mentionnée dans le CONTEXTE : Réponds que tu ne gères pas l'agenda de cette ville.
+           - Si l'utilisateur demande un **Thème** (ex: Cinéma, Foot) qui n'est pas dans le CONTEXTE : Réponds que cet agenda ne couvre pas ce type d'activité.
+           - Si la question est générale (Chit-chat, salutations) : Réponds poliment et propose ton aide pour trouver une sortie culturelle.
 
-        2. **RECOMMANDATION D'ÉVÉNEMENTS (Contexte pré-filtré)** :
-           - Le CONTEXTE ci-dessous ne contient QUE les événements qui correspondent à la demande de l'utilisateur (par exemple, pour "demain" ou "ce week-end").
-           - Si le CONTEXTE est vide, cela signifie qu'aucun événement pertinent n'a été trouvé pour la demande spécifique. Dans ce cas, réponds : "Désolé, je n'ai pas trouvé d'événement pour [période de la demande si connue, sinon 'votre demande']."
-           - **INTERDICTION TOTALE D'INVENTER DES ÉVÉNEMENTS OU DES DATES.** Base-toi STRICTEMENT et UNIQUEMENT sur le CONTEXTE fourni.
-           - Si le CONTEXTE contient des événements, résume-les clairement, donne les dates EXACTES (issues du contexte) et les URLs.
+        2. **RÉPONSE FACTUELLE SUR LES ÉVÉNEMENTS** :
+           - Utilise **uniquement** les informations du CONTEXTE.
+           - Si le CONTEXTE est vide après filtrage (indiqué par "Aucun événement trouvé...") : Dis simplement que tu n'as pas d'événements pour cette recherche spécifique (date/lieu/thème). **N'INVENTE RIEN.**
+           - Si tu as des événements : Présente-les avec leur Titre, Lieu, et Date précise.
 
-        CONTEXTE DES ÉVÉNEMENTS (pré-filtré par Python) :
+        CONTEXTE (Événements filtrés) :
         {context}
 
-        QUESTION : {question}
+        QUESTION UTILISATEUR : {question}
 
-        RÉPONSE FACTUELLE :
+        TA RÉPONSE :
         """
         return ChatPromptTemplate.from_template(template)
 
     def _get_current_date(self, _):
-        """Retourne la date actuelle formatée."""
         return datetime.now().strftime("%A %d %B %Y")
 
     def _format_docs(self, docs: list[dict], date_context: dict):
-        # Déduplication basée sur l'URL pour ne pas répéter le même événement complet
         unique_docs = {}
         for doc in docs:
             url = doc.metadata.get("url")
-            if url and url not in unique_docs:
-                unique_docs[url] = doc.metadata.get("full_context", doc.page_content)
-            elif not url:
-                # Fallback si pas d'URL (ne devrait pas arriver avec nos données)
-                unique_docs[str(hash(doc.page_content))] = doc.page_content
+            content = doc.metadata.get("full_context", doc.page_content)
+            if url:
+                unique_docs[url] = content
+            else:
+                unique_docs[content] = content
 
         if not unique_docs:
-            # Si aucun document pertinent n'a été filtré, indique-le pour le LLM
-            period_display = date_context.get("display")
-            if period_display:
-                return f"Aucun événement trouvé pour {period_display}."
-            return "Aucun événement pertinent trouvé."
+            period = date_context.get("display", "")
+            if period:
+                return f"Aucun événement trouvé pour la période : {period}."
+            return "Aucun événement correspondant aux critères trouvés dans la base."
 
         return "\n\n".join(unique_docs.values())
 
     def _build_chain(self):
-        # 1. Extraction du contexte de date de la question (en Python)
+        # 1. Analyse date
         date_context_extractor = RunnablePassthrough.assign(
             date_context=lambda x: self._get_date_range_from_query(x["question"])
         )
 
-        # 2. Récupération des documents AVANT filtrage (k documents par le retriever)
-        # 3. Filtrage des documents par Python en fonction du contexte de date
+        # 2. Retrieval + Filtrage Python
         filtered_retriever_step = RunnablePassthrough.assign(
             retrieved_docs=lambda x: self._filter_retrieved_docs(
-                self.retriever.invoke(x["question"]), x["date_context"]
+                self.retriever.invoke(x["question"]),
+                x["date_context"],
             )
         )
 
@@ -203,7 +193,6 @@ class RAGChain:
 
 
 if __name__ == "__main__":
-    rag = RAGChain()
-    response = rag.ask("Quels sont les événements sur la cuisine sauvage ?")
-    print("Question: Quels sont les événements sur la cuisine sauvage ?")
-    print(f"Réponse: {response}")
+    # Test rapide
+    chain = RAGChain()
+    print("Test WE:", chain.ask("C'est quoi les sorties ce week-end ?"))
