@@ -93,3 +93,16 @@ Le système est entièrement conteneurisé via **Docker**.
 
 ---
 *Damien Guesdon - Data Scientist Freelance*
+
+### Choix Architectural : Approche Hybride (Déterministe + Probabiliste)
+Pour la gestion des requêtes temporelles ('ce week-end', 'mois prochain'), nous avons opté pour une approche **hybride** plutôt que purement générative (Agent) :
+
+1.  **Parsing Déterministe (Python)** : La détection de l'intention temporelle et le calcul des dates sont gérés par du code Python strict.
+    -   *Avantage* : Précision mathématique infaillible (gestion des années bissextiles, semaines ISO, etc.).
+    -   *Avantage* : Sécurité (pas d'injection possible via la date).
+2.  **Filtrage en Amont** : Les documents sont filtrés AVANT d'être envoyés au LLM.
+    -   *Avantage* : Réduction drastique des hallucinations. Le LLM ne voit jamais d'événements hors-sujet, donc il ne peut pas se tromper en les recommandant.
+3.  **Synthèse Probabiliste (LLM)** : Le modèle ne sert qu'à formuler la réponse finale et gérer la conversation.
+
+Cette architecture a été préférée à une approche 'Agent autonome' (Tool Calling) pour ce POC afin de garantir une **stabilité maximale** et une **faible latence**, essentielles pour une application de recommandation grand public.
+
