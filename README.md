@@ -27,6 +27,8 @@ C'est la méthode la plus simple et la plus fiable.
     ```bash
     make docker-build
     ```
+    ⚠️ **Note importante** : La première construction peut prendre **entre 15 et 20 minutes** selon votre connexion internet, car Docker doit télécharger et configurer l'environnement Conda complet. Les constructions suivantes seront beaucoup plus rapides grâce au cache.
+
 3.  **Lancer l'application** :
     ```bash
     make docker-run
