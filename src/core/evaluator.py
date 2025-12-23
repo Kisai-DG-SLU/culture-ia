@@ -67,6 +67,19 @@ class RAGEvaluator:
         }
         return Dataset.from_dict(data)
 
+    def _get_avg_score(self, result, key):
+        """Helper to safely extract average score from Ragas result."""
+        try:
+            # Access via __getitem__ (works for dict and EvaluationResult)
+            val = result[key]
+            if isinstance(val, list):
+                # If list of scores, calculate average
+                return sum(val) / len(val) if val else 0.0
+            # If already a number (float/int)
+            return float(val)
+        except Exception:
+            return 0.0
+
     def run_evaluation(self, test_file="tests/evaluation_dataset.json"):
         print("Preparing evaluation dataset...")
         dataset = self.prepare_dataset(test_file)
@@ -93,10 +106,10 @@ class RAGEvaluator:
         # Ragas EvaluationResult (v0.2+) supports __getitem__ (['key']) but not .get()
         try:
             scores = {
-                "faithfulness": result["faithfulness"],
-                "answer_relevancy": result["answer_relevancy"],
-                "context_recall": result["context_recall"],
-                "context_precision": result["context_precision"],
+                "faithfulness": self._get_avg_score(result, "faithfulness"),
+                "answer_relevancy": self._get_avg_score(result, "answer_relevancy"),
+                "context_recall": self._get_avg_score(result, "context_recall"),
+                "context_precision": self._get_avg_score(result, "context_precision"),
             }
         except Exception as e:
             print(f"Warning: Error extracting scores: {e}. Trying fallback.")
