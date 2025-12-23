@@ -25,13 +25,12 @@ dependencies:
   - pre-commit
   - black
   - pylint
-  # Dependencies available via pip
-  - pip:
-    - python-dotenv
-    - langchain
-    - langchain-community
-    - langchain-mistralai
-    - langchain-huggingface
-    - mistralai
-    - tiktoken
-    - ragas
+  # LangChain Ecosystem & Dependencies (now all in Conda)
+  - langchain
+  - langchain-community
+  - langchain-mistralai
+  - langchain-huggingface
+  - mistralai
+  - ragas
+  - tiktoken
+  - python-dotenv

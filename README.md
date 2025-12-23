@@ -42,6 +42,15 @@ Pour les développeurs souhaitant modifier le code ou exécuter les tests.
     conda env create -f environment.yml
     conda activate culture-ia
     ```
+
+> **Note de Développement (Workflow `conda-lock`)**
+> Le `Dockerfile` utilise un fichier `conda-lock.yml` pour garantir des builds rapides et déterministes. Si vous modifiez `environment.yml`, vous **devez** regénérer le fichier de lock avant de construire l'image :
+> ```bash
+> # 1. Installez conda-lock si nécessaire: pip install conda-lock
+> # 2. Regénérez le lock pour la plateforme Docker (linux-64)
+> conda-lock lock -f environment.yml -p linux-64 --lockfile conda-lock.yml
+> ```
+
 3.  **Lancer l'application** :
     *   **Lancer l'API** (Terminal 1) :
         ```bash

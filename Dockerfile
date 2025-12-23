@@ -40,6 +40,7 @@ EXPOSE 8501
 
 # Le script de démarrage n'a pas besoin d'être copié séparément s'il est dans le `.`
 # On s'assure qu'il est exécutable
+COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
 CMD ["./entrypoint.sh"]
