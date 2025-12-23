@@ -27,11 +27,11 @@ L'architecture repose sur cinq piliers principaux :
 La qualité du système a été mesurée à l'aide de la bibliothèque **Ragas** sur un jeu de tests annoté de 4 questions de référence.
 
 **Métriques observées (Après optimisation finale) :**
-- **Fidélité (Faithfulness)** : ~82% (Amélioration nette via un prompt plus contraignant).
-- **Pertinence de la réponse** : ~73%
+- **Fidélité (Faithfulness)** : ~86% (Amélioration nette via un prompt plus contraignant).
+- **Pertinence de la réponse** : ~72%
 - **Rappel (Context Recall)** : ~75% (Stable avec k=2).
-- **Précision du Retrieval (Context Precision)** : ~50%.
-    - *Analyse* : Ce score est mathématiquement contraint par la taille du jeu de données (2 événements). Le système étant configuré pour récupérer 2 documents (`k=2`), une requête pertinente pour un seul événement ramènera forcément 50% de bruit (1 pertinent / 2 récupérés). Ce n'est pas un défaut du modèle mais une caractéristique du POC.
+- **Précision du Retrieval (Context Precision)** : ~62.5%.
+    - *Analyse* : Ce score est supérieur aux 50% attendus théoriquement (1 bon document sur 2 récupérés). Cela démontre que le moteur vectoriel est capable non seulement de trouver le document pertinent, mais aussi de le **classer en première position** dans la majorité des cas, validant la pertinence de l'embedding sémantique.
 
 ## 5. Défis Techniques et Résolution
 
@@ -51,6 +51,21 @@ Nous avons dû configurer finement les appels API pour forcer la récupération 
 
 Cette approche a permis de passer de 0 événement pertinent récupéré à une base de données à jour contenant les événements programmés jusqu'en 2026.
 
+### Robustesse et Fiabilité (Déploiement & Évaluation)
+La phase finale de stabilisation a mis en lumière plusieurs défis liés à l'environnement d'exécution conteneurisé et à l'évolution des dépendances.
+
+1.  **Optimisation du Build Docker (Réseaux lents)** :
+    - La construction de l'image Docker, basée sur `mambaforge`, échouait fréquemment sur des connexions instables (`IncompleteRead`).
+    - *Solution* : Configuration explicite de Conda pour augmenter drastiquement les timeouts (`remote_read_timeout_secs 300`) et le nombre de tentatives, garantissant un build reproductible partout.
+
+2.  **Compatibilité Ragas (Évaluation Automatisée)** :
+    - La montée de version de la librairie **Ragas** (v0.2 -> v0.3) a introduit des changements de rupture dans l'objet de retour (`EvaluationResult`), rendant les scores inaccessibles via les méthodes standard (`.get()`) et retournant parfois des listes de scores bruts au lieu de moyennes.
+    - *Solution* : Implémentation d'une couche d'abstraction défensive dans l'`evaluator.py` capable de gérer à la fois les dictionnaires et les objets Ragas, et de calculer automatiquement la moyenne des scores si nécessaire.
+
+3.  **Gestion des Chemins (Docker vs Local)** :
+    - L'écriture des fichiers de résultats échouait dans le conteneur car le script tentait d'écrire à la racine système (`/data`) au lieu du dossier projet (`/app/data`).
+    - *Solution* : Utilisation stricte de chemins relatifs basés sur `__file__` pour garantir que le code s'exécute identiquement en local et dans le conteneur.
+
 ### Optimisation de la précision et de la fidélité
 Pour garantir une expérience utilisateur fiable, nous avons implémenté deux stratégies d'optimisation avancées :
 
@@ -66,7 +81,7 @@ Ces ajustements ont permis d'éliminer les hallucinations où le bot proposait d
 
 ## 6. Déploiement
 Le système est entièrement conteneurisé via **Docker**.
-- **Image de base** : `continuumio/miniconda3` pour garantir une compatibilité parfaite avec l'environnement de développement Conda.
+- **Image de base** : `condaforge/mambaforge` (Multi-stage build) pour optimiser la taille et la vitesse.
 - L'image inclut un script d'entrée (`entrypoint.sh`) qui lance à la fois l'API (port 8000) et le frontend Streamlit (port 8501).
 - Une pipeline de **CI (GitHub Actions)** utilisant Conda a été mise en place pour valider les tests unitaires et la qualité du code à chaque modification.
 
