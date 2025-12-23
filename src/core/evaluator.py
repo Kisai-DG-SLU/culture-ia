@@ -23,8 +23,9 @@ class RAGEvaluator:
         self.embeddings = MistralAIEmbeddings(api_key=self.mistral_key)
 
         # Définition du chemin racine du projet
+        # src/core/evaluator.py -> ../.. = project root
         self.project_root = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../../..")
+            os.path.join(os.path.dirname(__file__), "../..")
         )
 
     def prepare_dataset(self, test_file="tests/evaluation_dataset.json"):
