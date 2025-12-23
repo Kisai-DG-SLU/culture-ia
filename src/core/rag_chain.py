@@ -37,7 +37,18 @@ class RAGChain:
     def _get_date_range_from_query(self, query: str):
         """Extrait une intention de date (demain, ce week-end) de la requête."""
         now = datetime.now()
-        query_lower = query.lower()
+        query_lower = query.strip().lower()
+
+        # Détection de salutation simple (sans demande d'info)
+        greetings = ["bonjour", "salut", "coucou", "hello", "bonsoir", "merci"]
+        # Si la requête est juste un mot de salutation ou très courte
+        if query_lower in greetings or len(query_lower.split()) <= 1:
+            return {
+                "type": "greeting",
+                "start_ts": None,
+                "end_ts": None,
+                "display": "Salutation",
+            }
 
         # Pour 'demain'
         if "demain" in query_lower:
@@ -92,6 +103,9 @@ class RAGChain:
 
     def _filter_retrieved_docs(self, docs: list, date_context: dict):
         """Filtre les documents par date."""
+        if date_context.get("type") == "greeting":
+            return []
+
         start_ts = date_context.get("start_ts", 0)
         end_ts = date_context.get("end_ts", float("inf"))
 
