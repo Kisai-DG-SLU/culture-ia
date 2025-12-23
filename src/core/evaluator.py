@@ -90,31 +90,25 @@ class RAGEvaluator:
         # Save results
         output_file = os.path.join(self.project_root, "data/evaluation_results.json")
 
-        # Force conversion to dictionary to avoid list-related errors in frontend
-        # Ragas Result object usually acts as a dict for average scores
+        # Ragas EvaluationResult (v0.2+) supports __getitem__ (['key']) but not .get()
         try:
-            # We explicitly extract the metrics we care about to ensure valid JSON structure
             scores = {
-                "faithfulness": result.get("faithfulness", 0.0),
-                "answer_relevancy": result.get("answer_relevancy", 0.0),
-                "context_recall": result.get("context_recall", 0.0),
-                "context_precision": result.get("context_precision", 0.0),
+                "faithfulness": result["faithfulness"],
+                "answer_relevancy": result["answer_relevancy"],
+                "context_recall": result["context_recall"],
+                "context_precision": result["context_precision"],
             }
         except Exception as e:
-            print(
-                f"Warning: Error extracting scores: {e}. Saving raw result cast to dict."
-            )
-            # Fallback: try to cast the whole object to dict if specific keys fail
+            print(f"Warning: Error extracting scores: {e}. Trying fallback.")
+            # Fallback for older versions or unexpected structure
             try:
-                scores = dict(result)
+                if hasattr(result, "scores"):
+                    # scores might be a list or dict
+                    scores = dict(result.scores)
+                else:
+                    scores = dict(result)
             except Exception:
-                # Debugging: save type and dir of result to understand what it is
-                scores = {
-                    "error": "Could not serialize Ragas result",
-                    "type": str(type(result)),
-                    "dir": str(dir(result)),
-                    "str_representation": str(result),
-                }
+                scores = {"error": "Could not serialize Ragas result"}
 
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, "w", encoding="utf-8") as f:

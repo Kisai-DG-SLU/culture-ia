@@ -84,26 +84,25 @@ def test_prepare_dataset(mock_dataset, mock_json, mock_open, mock_evaluator):
     assert len(data["reference"]) == 2
     assert data["retrieved_contexts"][0] == ["Context content"]
 
-    @patch("src.core.evaluator.evaluate")
-    @patch("src.core.evaluator.RAGEvaluator.prepare_dataset")
-    def test_run_evaluation_exception(mock_prep, mock_evaluate, mock_evaluator):
-        """Vérifie que l'évaluation gère gracieusement les erreurs de format de résultat."""
-        # Simulation d'un résultat qui provoque une erreur lors de l'extraction
-        mock_result = MagicMock()
-        # On fait en sorte que .get() lève une exception
-        mock_result.get.side_effect = Exception("Format inattendu")
 
-        # Le fallback "dict(result)" doit aussi échouer pour tomber dans le cas d'erreur final
-        # MagicMock.__iter__ existe par défaut, on le fait planter
-        mock_result.__iter__.side_effect = TypeError("Not iterable")
+@patch("src.core.evaluator.evaluate")
+@patch("src.core.evaluator.RAGEvaluator.prepare_dataset")
+def test_run_evaluation_exception(mock_prep, mock_evaluate, mock_evaluator):
+    """Vérifie que l'évaluation gère gracieusement les erreurs de format de résultat."""
+    # Simulation d'un résultat qui provoque une erreur lors de l'extraction
+    mock_result = MagicMock()
+    # On fait en sorte que l'accès par index [] lève une exception
+    mock_result.__getitem__.side_effect = KeyError("Format inattendu")
 
-        mock_evaluate.return_value = mock_result
-        mock_prep.return_value = MagicMock()
+    # Le fallback sur .scores ou dict() doit aussi échouer
+    del mock_result.scores
+    mock_result.__iter__.side_effect = TypeError("Not iterable")
 
-        with patch("builtins.open", MagicMock()) as mock_file_open:
-            mock_evaluator.run_evaluation("dummy.json")
+    mock_evaluate.return_value = mock_result
+    mock_prep.return_value = MagicMock()
 
-            # Vérifie qu'on a essayé d'écrire quelque chose (probablement le message d'erreur)
-            mock_file_open.assert_called()
-        # On vérifie que le fichier a quand même été ouvert pour écrire quelque chose
-        assert mock_file_open.called
+    with patch("builtins.open", MagicMock()) as mock_file_open:
+        mock_evaluator.run_evaluation("dummy.json")
+
+        # Vérifie qu'on a essayé d'écrire quelque chose (probablement le message d'erreur)
+        mock_file_open.assert_called()
