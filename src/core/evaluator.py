@@ -90,18 +90,25 @@ class RAGEvaluator:
         # Save results
         output_file = os.path.join(self.project_root, "data/evaluation_results.json")
 
-        # Convert Ragas Result object to a dictionary of scores
-        # Depending on Ragas version, result might behave like a dict-like object
-        # but to be safe, we extract the scores explicitly if it's not directly dumpable
+        # Force conversion to dictionary to avoid list-related errors in frontend
+        # Ragas Result object usually acts as a dict for average scores
         try:
-            # Try converting to dict using scores attribute if it exists, or iterate keys
-            if hasattr(result, "scores"):
-                scores = result.scores
-            else:
-                scores = {k: result[k] for k in result.keys()}
+            # We explicitly extract the metrics we care about to ensure valid JSON structure
+            scores = {
+                "faithfulness": result.get("faithfulness", 0.0),
+                "answer_relevancy": result.get("answer_relevancy", 0.0),
+                "context_recall": result.get("context_recall", 0.0),
+                "context_precision": result.get("context_precision", 0.0),
+            }
         except Exception as e:
-            print(f"Warning: Could not convert result directly: {e}")
-            scores = str(result)  # Fallback
+            print(
+                f"Warning: Error extracting scores: {e}. Saving raw result cast to dict."
+            )
+            # Fallback: try to cast the whole object to dict if specific keys fail
+            try:
+                scores = dict(result)
+            except Exception:
+                scores = {"error": "Could not serialize Ragas result"}
 
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, "w", encoding="utf-8") as f:

@@ -84,23 +84,26 @@ def test_prepare_dataset(mock_dataset, mock_json, mock_open, mock_evaluator):
     assert len(data["reference"]) == 2
     assert data["retrieved_contexts"][0] == ["Context content"]
 
+    @patch("src.core.evaluator.evaluate")
+    @patch("src.core.evaluator.RAGEvaluator.prepare_dataset")
+    def test_run_evaluation_exception(mock_prep, mock_evaluate, mock_evaluator):
+        """Vérifie que l'évaluation gère gracieusement les erreurs de format de résultat."""
+        # Simulation d'un résultat qui provoque une erreur lors de l'extraction
+        mock_result = MagicMock()
+        # On fait en sorte que .get() lève une exception
+        mock_result.get.side_effect = Exception("Format inattendu")
 
-@patch("src.core.evaluator.evaluate")
-@patch("src.core.evaluator.RAGEvaluator.prepare_dataset")
-def test_run_evaluation_exception(mock_prep, mock_evaluate, mock_evaluator):
-    """Vérifie que l'évaluation gère gracieusement les erreurs de format de résultat."""
-    # Simulation d'un résultat qui provoque une erreur lors de la conversion
-    mock_result = MagicMock()
-    # On fait en sorte que l'accès aux scores ou l'itération plante
-    del mock_result.scores
-    mock_result.keys.side_effect = Exception("Format inattendu")
-    mock_result.__str__.return_value = "ResultatTextuel"
+        # Le fallback "dict(result)" doit aussi échouer pour tomber dans le cas d'erreur final
+        # MagicMock.__iter__ existe par défaut, on le fait planter
+        mock_result.__iter__.side_effect = TypeError("Not iterable")
 
-    mock_evaluate.return_value = mock_result
-    mock_prep.return_value = MagicMock()
+        mock_evaluate.return_value = mock_result
+        mock_prep.return_value = MagicMock()
 
-    with patch("builtins.open", MagicMock()) as mock_file_open:
-        mock_evaluator.run_evaluation("dummy.json")
+        with patch("builtins.open", MagicMock()) as mock_file_open:
+            mock_evaluator.run_evaluation("dummy.json")
 
+            # Vérifie qu'on a essayé d'écrire quelque chose (probablement le message d'erreur)
+            mock_file_open.assert_called()
         # On vérifie que le fichier a quand même été ouvert pour écrire quelque chose
         assert mock_file_open.called
