@@ -5,33 +5,33 @@ channels:
 dependencies:
   - python=3.10
   - pip
-  # Data & Core
+  # Core data science
   - pandas
   - requests
   - numpy<2.0.0
+  - pyarrow=15.0.0
+  - datasets=2.19.0
   # Vector DB & ML
   - faiss-cpu
   - sentence-transformers
-  # API
+  - transformers
+  - tokenizers
+  # Web Framework & Utils
   - fastapi
   - uvicorn
-  - httpx
-  # Frontend
   - streamlit
-  - plotly
-  # Quality & Testing
+  - python-dotenv
+  # Dev tools
   - pytest
   - pytest-cov
   - pre-commit
   - black
   - pylint
-  # Dependencies available via pip
-  - pip:
-    - python-dotenv
-    - langchain
-    - langchain-community
-    - langchain-mistralai
-    - langchain-huggingface
-    - mistralai
-    - tiktoken
-    - ragas
+  # LangChain Ecosystem & Dependencies
+  - langchain
+  - langchain-community
+  - langchain-mistralai
+  - langchain-huggingface
+  - mistralai
+  - ragas
+  - tiktoken
