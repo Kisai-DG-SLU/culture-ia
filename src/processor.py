@@ -118,6 +118,7 @@ class EventProcessor:
             "city": city,
             "start_ts": start_ts,
             "end_ts": end_ts,
+            "all_sessions_ts": timestamps,
             "full_context": full_context,
         }
 

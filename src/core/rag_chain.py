@@ -102,7 +102,7 @@ class RAGChain:
         }
 
     def _filter_retrieved_docs(self, docs: list, date_context: dict):
-        """Filtre les documents par date."""
+        """Filtre les documents par date de session précise."""
         if date_context.get("type") == "greeting":
             return []
 
@@ -111,14 +111,20 @@ class RAGChain:
 
         filtered_docs = []
         for doc in docs:
-            # Sécurité : vérifier que les métadonnées existent
-            event_start_ts = doc.metadata.get("start_ts", 0)
-            event_end_ts = doc.metadata.get("end_ts", float("inf"))
+            # On vérifie les sessions individuelles si elles existent
+            sessions = doc.metadata.get("all_sessions_ts", [])
 
-            # Chevauchement des périodes :
-            # (Debut_Event <= Fin_Requete) ET (Fin_Event >= Debut_Requete)
-            if event_start_ts <= end_ts and event_end_ts >= start_ts:
-                filtered_docs.append(doc)
+            if sessions:
+                # Un événement est valide si AU MOINS une session est dans la plage
+                has_valid_session = any(start_ts <= ts <= end_ts for ts in sessions)
+                if has_valid_session:
+                    filtered_docs.append(doc)
+            else:
+                # Fallback sur la plage globale si pas de sessions détaillées (ancien index)
+                event_start_ts = doc.metadata.get("start_ts", 0)
+                event_end_ts = doc.metadata.get("end_ts", float("inf"))
+                if event_start_ts <= end_ts and event_end_ts >= start_ts:
+                    filtered_docs.append(doc)
         return filtered_docs
 
     def _get_prompt_template(self):
