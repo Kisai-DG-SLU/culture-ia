@@ -45,7 +45,8 @@ jobs:
 
     - name: Linting
       shell: bash -l {0}
-      run: make lint || echo "⚠️ Lint warnings"
+        run: | # Désactiver C0111, C0103, R0903, W0718, W0621, W0613, R0913, R0917, R0914, C0301
+          .venv_conda/bin/pylint src/ tests/ --disable=C0111,C0103,R0903,W0718,W0621,W0613,R0913,R0917,R0914,C0301
 
     - name: Run Tests with Coverage Gate (70%)
       shell: bash -l {0}
