@@ -1,33 +1,45 @@
-FROM continuumio/miniconda3
+# --- Étape 1: Le Constructeur ---
+# Utilise mambaforge pour créer l'environnement rapidement.
+# Cette étape contiendra tous les outils de build et sera lourde, mais temporaire.
+FROM conda-forge/mambaforge AS builder
 
 WORKDIR /app
 
-# Installation des outils de compilation basiques (parfois nécessaires pour certaines libs pip)
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# Copie uniquement le fichier de lock pour une mise en cache optimale
+COPY conda-lock.yml .
 
-# Copie du fichier d'environnement
-COPY environment.yml .
+# Crée l'environnement à partir du fichier de lock
+# Le nom de l'environnement est crucial pour le retrouver plus tard
+RUN mamba create --name culture-ia --file conda-lock.yml && conda clean -afy
 
-# Création de l'environnement Conda
-# On utilise --prune pour nettoyer les caches et réduire la taille
-RUN conda env create -f environment.yml && conda clean -afy
+
+# --- Étape 2: L'Image Finale ---
+# Part d'une image miniconda légère qui ne contient que le strict nécessaire
+FROM continuumio/miniconda3
+
+# Le nom de l'environnement doit correspondre à celui créé dans l'étape 'builder'
+ENV ENV_NAME=culture-ia
+
+# Copie l'environnement Conda complet depuis l'étape 'builder'
+# C'est beaucoup plus rapide que de le recréer
+COPY --from=builder /opt/conda/envs/$ENV_NAME /opt/conda/envs/$ENV_NAME
+
+WORKDIR /app
 
 # Activation de l'environnement par défaut dans le path
-# Cela évite d'avoir à faire "conda activate" à chaque commande
-ENV PATH=/opt/conda/envs/culture-ia/bin:$PATH
+ENV PATH=/opt/conda/envs/$ENV_NAME/bin:$PATH
 ENV PYTHONPATH=/app
 
-# Copie du reste de l'application
+# Copie le code de l'application
+# Cette couche sera la seule à être reconstruite lors des changements de code
 COPY . .
 
 # Exposition des ports API et Streamlit
 EXPOSE 8000
 EXPOSE 8501
 
-# Script de démarrage
-COPY entrypoint.sh .
+# Le script de démarrage n'a pas besoin d'être copié séparément s'il est dans le `.`
+# On s'assure qu'il est exécutable
 RUN chmod +x entrypoint.sh
 
 CMD ["./entrypoint.sh"]
