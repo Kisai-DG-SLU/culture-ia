@@ -108,7 +108,13 @@ class RAGEvaluator:
             try:
                 scores = dict(result)
             except Exception:
-                scores = {"error": "Could not serialize Ragas result"}
+                # Debugging: save type and dir of result to understand what it is
+                scores = {
+                    "error": "Could not serialize Ragas result",
+                    "type": str(type(result)),
+                    "dir": str(dir(result)),
+                    "str_representation": str(result),
+                }
 
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, "w", encoding="utf-8") as f:
