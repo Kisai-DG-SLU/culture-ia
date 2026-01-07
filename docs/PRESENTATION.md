@@ -32,10 +32,12 @@ Ce document sert de support pour la présentation orale (slides) et détaille le
 ## Slide 3 : La Solution Technique : Architecture RAG
 *(Schéma d'architecture à afficher)*
 
-**[IMAGE SUGGÉRÉE : Diagramme de flux horizontal]**
-*   **Gauche** : Logo OpenAgenda -> (Flèche "ETL") -> Script Python
-*   **Centre** : Base FAISS (Icône Base de données) + LLM Mistral (Icône Cerveau/Robot)
-*   **Droite** : Utilisateur -> (Flèche "Question") -> Interface Streamlit -> (Flèche "Réponse")
+**[IMAGE SUGGÉRÉE : Diagramme de flux horizontal dans un conteneur]**
+*   **Conteneur Docker Global** contenant :
+    *   **Gauche** : Collecteur (ETL) -> Base FAISS (Stockage local)
+    *   **Centre** : API FastAPI + Logique RAG (LangChain)
+    *   **Droite** : Frontend Streamlit (Interface Utilisateur)
+*   **Externe** : API OpenAgenda (Source) & API Mistral (LLM)
 
 **Fonctionnement global :**
 1.  **Collecte (ETL)** : Récupération des événements depuis l'API OpenAgenda.
@@ -123,12 +125,14 @@ Comment mesurer la qualité ? Utilisation de la librairie **Ragas**.
 
 ---
 
-## Slide 8 : Qualité Code & Industrialisation
-Ce n'est pas qu'un script, c'est un projet logiciel.
+## Slide 8 : Qualité Code & Industrialisation (DevOps)
+La robustesse du projet repose sur des pratiques DevOps modernes :
 
+- **Conteneurisation (Docker)** : 
+    - Le système entier (API + Frontend + Base Vectorielle) est encapsulé dans une image Docker optimisée.
+    - Avantage : "Build once, run anywhere" (aucune installation complexe requise sur le poste de démonstration).
 - **Tests Unitaires** : Couverture de code > 80% (vérifiée par `pytest`).
 - **CI/CD** : Pipeline GitHub Actions qui lance les tests à chaque modification.
-- **Docker** : Application livrée sous forme de conteneur, prête à déployer n'importe où.
 - **Documentation** : README complet, Rapport Technique et doc API (Swagger).
 
 ---
