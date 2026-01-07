@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   quality-gate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       should_merge: ${{ steps.check_merge.outputs.should_merge }}
     
@@ -83,7 +83,7 @@ jobs:
   auto-merge-and-version:
     needs: quality-gate
     if: needs.quality-gate.outputs.should_merge == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     
     steps:
     - uses: actions/checkout@v4
@@ -135,7 +135,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       pages: write
       id-token: write
