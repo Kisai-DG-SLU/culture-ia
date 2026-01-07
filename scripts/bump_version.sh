@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# S'assurer d'avoir tous les tags distants
+git fetch --tags
+
 # Récupérer le dernier tag
 LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
 echo "Latest tag: $LATEST_TAG"
