@@ -4,6 +4,7 @@
 ![Python Version](https://img.shields.io/badge/python-3.10-blue)
 ![License](https://img.shields.io/badge/license-Proprietary-red)
 ![Environment](https://img.shields.io/badge/environment-conda-green)
+[![Coverage](https://img.shields.io/badge/coverage-75%25-green)](https://kisai-dg-slu.github.io/culture-ia/)
 
 Culture IA est un assistant intelligent (RAG) développé pour **Puls-Events**. Il permet d'interroger en langage naturel la base de données des événements culturels d'OpenAgenda.
 

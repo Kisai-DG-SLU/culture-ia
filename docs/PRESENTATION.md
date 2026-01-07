@@ -1,158 +1,174 @@
-# Présentation de Soutenance - Culture IA
+---
+marp: true
+theme: gaia
+paginate: true
+backgroundImage: url('images/background.png')
+color: #333
+style: |
+  section {
+    justify-content: center;
+    padding: 70px;
+  }
+  section::before {
+    content: ' ';
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 80px;
+    height: 80px;
+    background-image: url('images/logo_projet.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+  footer {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-size: 0.8em;
+  }
+  /* Pousse le contenu vers le bas pour un meilleur centrage visuel */
+  section:not(.lead) h1 {
+    margin-top: 1.5em; 
+  }
+  section.lead h1 {
+    font-size: 2.0em;
+    color: #2c3e50;
+    margin-top: 0;
+  }
+  section.lead h2 {
+    font-size: 1.5em;
+    color: #e74c3c;
+  }
+  .catchphrase {
+    color: #e74c3c;
+    font-size: 1.4em;
+    font-weight: bold;
+    margin-top: 20px;
+    display: inline-block;
+    transform: rotate(-2deg);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  }
+  .split-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    width: 100%;
+  }
+  .split-text {
+    flex: 1;
+  }
+  .split-image {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .split-image img {
+    max-height: 300px;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  .center-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 20px;
+  }
+  .center-container img {
+    max-height: 450px;
+    max-width: 100%;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+---
 
-Ce document sert de support pour la présentation orale (slides) et détaille le contenu à exposer.
+<!-- _class: lead -->
+
+# Assistant Culture IA
+## Projet 7 - Puls-Events
+
+**Damien Guesdon**
+Janvier 2026
+
+![bg right:30% fit](images/logo_projet.png)
 
 ---
 
-## Slide 1 : Titre & Introduction
-**Titre :** Assistant Intelligent de Recommandation Culturelle (Projet 7)
-**Sous-titre :** Une approche RAG pour dynamiser la découverte d'événements
-**Présenté par :** Damien Guesdon
-**Contexte :** Mission pour Puls-Events
+# 1. Le Problème
+<p class="catchphrase">Une base de données riche, mais une expérience utilisateur pauvre.</p>
 
-*(Discours : Bonjour, je suis Damien Guesdon. Aujourd'hui, je vais vous présenter le POC réalisé pour Puls-Events, visant à créer un assistant virtuel capable de recommander des événements culturels de manière naturelle et pertinente.)*
+![bg right:40% fit](images/problem_visual.png)
 
 ---
 
-## Slide 2 : Le Besoin & La Problématique
-**Contexte :**
-- Puls-Events dispose de nombreuses données (OpenAgenda) mais leur exploration via des filtres classiques est limitée.
-- Les utilisateurs veulent des recommandations personnalisées ("Quoi faire ce week-end à Paris ?").
+# 2. La Solution
+<p class="catchphrase">Le RAG : Connecter l'intelligence du LLM à nos données réelles.</p>
 
-**Problématique :**
-*Comment permettre à un utilisateur d'interroger une base d'événements en langage naturel tout en garantissant des réponses factuelles et à jour ?*
-
-**Objectifs du POC :**
-1.  Connecter des données réelles (API OpenAgenda).
-2.  Implémenter une architecture RAG (Retrieval-Augmented Generation).
-3.  Fournir une API robuste et testée.
+![bg right:40% fit](images/architecture_rag.png)
 
 ---
 
-## Slide 3 : La Solution Technique : Architecture RAG
-*(Schéma d'architecture à afficher)*
+# 3. La Stack Technique
+<p class="catchphrase">Souveraineté, Performance et Simplicité.</p>
 
-**[IMAGE SUGGÉRÉE : Diagramme de flux horizontal dans un conteneur]**
-*   **Conteneur Docker Global** contenant :
-    *   **Gauche** : Collecteur (ETL) -> Base FAISS (Stockage local)
-    *   **Centre** : API FastAPI + Logique RAG (LangChain)
-    *   **Droite** : Frontend Streamlit (Interface Utilisateur)
-*   **Externe** : API OpenAgenda (Source) & API Mistral (LLM)
-
-**Fonctionnement global :**
-1.  **Collecte (ETL)** : Récupération des événements depuis l'API OpenAgenda.
-2.  **Vectorisation** : Transformation des textes en vecteurs mathématiques (Embeddings) stockés dans **FAISS**.
-3.  **Interrogation** :
-    - L'utilisateur pose une question.
-    - Le système recherche les 3 événements les plus proches sémantiquement dans FAISS.
-    - Le **LLM (Mistral AI)** génère une réponse en utilisant ces événements comme contexte.
+![bg right:40% fit](images/stack_tech.png)
 
 ---
 
-## Slide 4 : Choix Technologiques (Stack)
-Pourquoi ces choix ?
+# 4. Le Pipeline de Données (ETL)
+<p class="catchphrase">"Garbage In, Garbage Out" : La qualité avant tout.</p>
 
-**[IMAGE SUGGÉRÉE : Mosaïque de Logos]**
-*   **Python** (Le socle)
-*   **Conda** (L'environnement robuste)
-*   **LangChain** (L'orchestrateur)
-*   **FastAPI** (Le moteur API)
-*   **Streamlit** (Le cockpit)
-
-- **Python 3.10** : Standard actuel pour l'IA/Data.
-- **Mistral AI (`mistral-tiny`)** :
-    - *Pourquoi ?* Modèle français, performant, rapide et moins coûteux que GPT-4 pour cette tâche.
-- **FAISS (Facebook AI Similarity Search)** :
-    - *Pourquoi ?* Base vectorielle locale, très rapide, ne nécessite pas de serveur externe complexe (idéal pour un POC).
-- **FastAPI** :
-    - *Pourquoi ?* Asynchrone, performant et génère automatiquement la documentation (Swagger).
+![bg right:40% fit](images/pipeline_etl.png)
 
 ---
 
-## Slide 5 : Pipeline de Données & Défi Technique
-**Le Processus ETL :**
-1.  **Extraction** : API OpenAgenda V2.
-2.  **Filtrage** : Exclusion des événements passés (> 1 an).
-3.  **Indexation** : Création des embeddings.
+# 5. Défi Technique :<br>Le Temps
+<p class="catchphrase">Un événement passé n'a aucune valeur.</p>
 
-**[IMAGE SUGGÉRÉE : Capture d'écran ou Schéma "Timeline"]**
-*   Montrer une ligne de temps avec "Passé (Archives)", "Aujourd'hui", "Futur (Prochains événements)".
-*   Mettre en évidence le filtre qui sélectionne les événements futurs.
-
-**Focus Challenge Technique (La gestion du temps) :**
-- *Problème* : L'API OpenAgenda, par défaut, masque les horaires et priorise les vieux événements, rendant le RAG obsolète.
-- *Solution* : Configuration avancée de l'API (`includeFields[]=timings`, `relative[]=current,upcoming`) pour forcer la récupération des événements futurs (2025-2026).
+![bg right:40% fit](images/calendar_visual.png)
 
 ---
 
-## Slide 6 : Démonstration (Cockpit de Pilotage)
-*(Transition vers la démo live de l'interface Streamlit)*
+<!-- _class: lead -->
 
-**[IMAGE SUGGÉRÉE : Capture d'écran de l'interface Streamlit complète]**
-*   Montrer les 3 onglets (Assistant, Admin, Perf)
-*   Une bulle de chat avec une réponse pertinente.
+# DÉMONSTRATION
 
-Nous allons utiliser le **Cockpit IA** développé pour ce POC :
-
-1.  **Onglet Assistant** :
-    - *Question* : "Je cherche une activité autour de la nature et de la cuisine."
-    - *Réponse* : L'assistant interroge FAISS et génère une réponse fluide.
-2.  **Onglet Performances** :
-    - Visualisation en temps réel des scores Ragas sous forme de **Radar Chart** (Fidélité vs Rappel).
-3.  **Onglet Administration** :
-    - Démonstration de la mise à jour à chaud : Clic sur "Reconstruire l'index".
+<div class="center-container">
+  <img src="images/demo_screenshot.png" />
+</div>
 
 ---
 
-## Slide 7 : Résultats & Évaluation
-Comment mesurer la qualité ? Utilisation de la librairie **Ragas**.
+# 7. Évaluation (Ragas)
 
-**[IMAGE SUGGÉRÉE : Graphique Radar (Spider Plot)]**
-*   Axe 1 : Fidélité (82%)
-*   Axe 2 : Pertinence (73%)
-*   Axe 3 : Rappel (75%)
-*   Axe 4 : Précision (50%)
-
-**Métriques Clés (sur jeu de test) :**
-- **Fidélité (Faithfulness) : ~82%** (Optimisé via prompt strict)
-    - Le modèle n'invente pas d'informations (hallucinations faibles).
-- **Pertinence (Relevancy) : ~73%**
-    - Les réponses sont directes et utiles.
-- **Rappel (Context Recall) : ~75%**
-    - Le système retrouve la majorité des informations pertinentes.
-- **Précision Contexte (Context Precision) : ~50%**
-    - *Note explicative* : Ce score est un artefact lié à la taille de la base (2 événements). Pour une question précise, le système ramène 1 document utile + 1 inutile (car k=2), ce qui divise mathématiquement la précision par deux.
+<div class="split-container">
+  <div class="split-text">
+    <p class="catchphrase">On ne devine pas la qualité, on la mesure.</p>
+  </div>
+  <div class="split-image">
+    <img src="images/ragas_radar.png" />
+  </div>
+</div>
 
 ---
 
-## Slide 8 : Qualité Code & Industrialisation (DevOps)
-La robustesse du projet repose sur des pratiques DevOps modernes :
+# 8. Industrialisation
+<p class="catchphrase">Docker : "Build once, run anywhere".</p>
 
-- **Conteneurisation (Docker)** : 
-    - Le système entier (API + Frontend + Base Vectorielle) est encapsulé dans une image Docker optimisée.
-    - Avantage : "Build once, run anywhere" (aucune installation complexe requise sur le poste de démonstration).
-- **Tests Unitaires** : Couverture de code > 80% (vérifiée par `pytest`).
-- **CI/CD** : Pipeline GitHub Actions qui lance les tests à chaque modification.
-- **Documentation** : README complet, Rapport Technique et doc API (Swagger).
+![bg right:40% fit](images/docker_visual.png)
 
 ---
 
-## Slide 9 : Limites & Perspectives
-**Limites du POC :**
-- Index statique (nécessite un redémarrage pour ingérer de nouveaux événements).
-- Pas de mémoire de conversation (chaque question est indépendante).
+# 9. Limites & Perspectives
+<p class="catchphrase">Roadmap vers la V2.</p>
 
-**Roadmap V2 (Améliorations) :**
-1.  **Mise à jour incrémentale** : Tâche planifiée (CRON) pour mettre à jour FAISS la nuit.
-2.  **Recherche Hybride** : Combiner mots-clés (BM25) et vecteurs pour plus de précision sur les noms propres.
-3.  **Interface UI** : Développer un frontend (Streamlit ou React) pour le grand public.
+![bg right:40% fit](images/roadmap_visual.png)
 
 ---
 
-## Slide 10 : Conclusion
-En résumé :
-- Un système **fonctionnel** qui répond aux exigences de Puls-Events.
-- Une architecture **maîtrisée** et **souveraine** (Mistral).
-- Une base solide pour l'industrialisation (Docker, Tests, CI).
+<!-- _class: lead -->
 
-**Merci de votre attention. Avez-vous des questions ?**
+# CONCLUSION
+POC Validé. Prêt pour la production.
+
+**Merci de votre écoute.**

@@ -27,11 +27,11 @@ L'architecture repose sur cinq piliers principaux :
 La qualité du système a été mesurée à l'aide de la bibliothèque **Ragas** sur un jeu de tests annoté de 4 questions de référence.
 
 **Métriques observées (Après optimisation finale) :**
-- **Fidélité (Faithfulness)** : ~86% (Amélioration nette via un prompt plus contraignant).
-- **Pertinence de la réponse** : ~72%
+- **Fidélité (Faithfulness)** : ~66,67% (Amélioration possible via un prompt plus contraignant).
+- **Pertinence de la réponse** : ~71%
 - **Rappel (Context Recall)** : ~75% (Stable avec k=2).
-- **Précision du Retrieval (Context Precision)** : ~62.5%.
-    - *Analyse* : Ce score est supérieur aux 50% attendus théoriquement (1 bon document sur 2 récupérés). Cela démontre que le moteur vectoriel est capable non seulement de trouver le document pertinent, mais aussi de le **classer en première position** dans la majorité des cas, validant la pertinence de l'embedding sémantique.
+- **Précision du Retrieval (Context Precision)** : ~50%.
+    - *Analyse* : Ce score est attendu théoriquement (1 bon document sur 2 récupérés). Le moteur vectoriel est capable de trouver le document pertinent, et de le **classer en première position** dans la majorité des cas, validant la pertinence de l'embedding sémantique, mais avec 2 documents, les chiffres sont plus sévères.
 
 ## 5. Défis Techniques et Résolution
 
@@ -60,7 +60,7 @@ La phase finale de stabilisation a mis en lumière plusieurs défis liés à l'e
 
 2.  **Compatibilité Ragas (Évaluation Automatisée)** :
     - La montée de version de la librairie **Ragas** (v0.2 -> v0.3) a introduit des changements de rupture dans l'objet de retour (`EvaluationResult`), rendant les scores inaccessibles via les méthodes standard (`.get()`) et retournant parfois des listes de scores bruts au lieu de moyennes.
-    - *Solution* : Implémentation d'une couche d'abstraction défensive dans l'`evaluator.py` capable de gérer à la fois les dictionnaires et les objets Ragas, et de calculer automatiquement la moyenne des scores si nécessaire.
+    - *Solution* : Implémentation d'une couche d'abstraction dans l'`evaluator.py` capable de gérer à la fois les dictionnaires et les objets Ragas, et de calculer automatiquement la moyenne des scores si nécessaire.
 
 3.  **Gestion des Chemins (Docker vs Local)** :
     - L'écriture des fichiers de résultats échouait dans le conteneur car le script tentait d'écrire à la racine système (`/data`) au lieu du dossier projet (`/app/data`).
@@ -99,9 +99,8 @@ Le système est entièrement conteneurisé via **Docker**.
 
 ## 7. Pistes d'Amélioration
 1.  **Recherche Hybride** : Combiner la recherche sémantique avec des filtres par mots-clés ou par dates pour une précision accrue.
-2.  **Interface Utilisateur** : Développer une interface Streamlit pour une démo encore plus engageante.
-3.  **Mise à jour à chaud** : Implémenter un système de mise à jour incrémentale de l'index sans redémarrage de l'API.
-4.  **Gestion de la mémoire** : Ajouter une fenêtre de contexte conversationnel pour permettre des questions de suivi (ex: "Et c'est gratuit ?").
+2.  **Mise à jour à chaud** : Implémenter un système de mise à jour incrémentale de l'index sans redémarrage de l'API.
+3.  **Gestion de la mémoire** : Ajouter une fenêtre de contexte conversationnel pour permettre des questions de suivi (ex: "Et c'est gratuit ?").
 
 ---
 *Damien Guesdon - Data Scientist Freelance*
