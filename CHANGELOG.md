@@ -4,6 +4,10 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/), et ce projet adhère au [Versionnage Sémantique](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.56] - 2026-01-07
+### Corrigé
+- Synchronisation manuelle des versions et recalibrage du tag de session.
+
 ## [0.0.55] - 2026-01-07
 ### Corrigé
 - Correction de la logique d'auto-merge dans la CI utilisant `gh pr create` et `gh pr merge`.
