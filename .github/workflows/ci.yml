@@ -100,6 +100,7 @@ jobs:
       env:
         HAS_TEST_ENV: ${{ vars.HAS_TEST_ENV }}
         SOURCE_BRANCH: ${{ github.ref_name }}
+        GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
       run: |
         echo "Source branch: $SOURCE_BRANCH"
         
@@ -111,21 +112,12 @@ jobs:
           TARGET_BRANCH="main"
         fi
         
-        # Récupérer et switcher sur la branche cible
-        git fetch origin $TARGET_BRANCH:$TARGET_BRANCH || git checkout -b $TARGET_BRANCH origin/$TARGET_BRANCH || git checkout -b $TARGET_BRANCH
-        git checkout $TARGET_BRANCH
-        
-        # Merge de la branche source
-        echo "Merging $SOURCE_BRANCH into $TARGET_BRANCH..."
-        git merge origin/$SOURCE_BRANCH --no-ff -m "Merge $SOURCE_BRANCH into $TARGET_BRANCH via CI"
-        
-        # Push
-        git push origin $TARGET_BRANCH
-
+        # Création et Auto-Merge de la PR via GitHub CLI
+        gh pr create --base $TARGET_BRANCH --head $SOURCE_BRANCH --title "Merge $SOURCE_BRANCH into $TARGET_BRANCH via CI" --body "Automated Pull Request created by CI-CD Pipeline." || echo "PR already exists"
+        gh pr merge --auto --merge --delete-branch
     - name: Bump Version (Only if merging to main)
       if: vars.HAS_TEST_ENV != 'true' # Si on merge direct sur main, on versionne
       run: |
-        # On est déjà sur main suite au step précédent
         chmod +x scripts/bump_version.sh
         ./scripts/bump_version.sh
 
