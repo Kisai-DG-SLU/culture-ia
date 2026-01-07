@@ -1,11 +1,11 @@
 # 🎭 Culture IA - Assistant de Recommandation Culturelle
 
 ![Build Status](https://github.com/Kisai-DG-SLU/culture-ia/actions/workflows/ci.yml/badge.svg)
+[![Coverage](https://img.shields.io/badge/coverage-75%25-green)](https://kisai-dg-slu.github.io/culture-ia/)
 ![Version](https://img.shields.io/github/v/tag/Kisai-DG-SLU/culture-ia?label=version&sort=semver)
 ![License](https://img.shields.io/github/license/Kisai-DG-SLU/culture-ia)
 ![Python Version](https://img.shields.io/badge/python-3.10-blue)
 ![Environment](https://img.shields.io/badge/environment-conda-green)
-[![Coverage](https://img.shields.io/badge/coverage-75%25-green)](https://kisai-dg-slu.github.io/culture-ia/)
 
 Culture IA est un assistant intelligent (RAG) développé pour **Puls-Events**. Il permet d'interroger en langage naturel la base de données des événements culturels d'OpenAgenda.
 
