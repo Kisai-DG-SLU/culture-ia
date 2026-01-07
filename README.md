@@ -1,8 +1,9 @@
 # 🎭 Culture IA - Assistant de Recommandation Culturelle
 
 ![Build Status](https://github.com/Kisai-DG-SLU/culture-ia/actions/workflows/ci.yml/badge.svg)
+![Version](https://img.shields.io/github/v/tag/Kisai-DG-SLU/culture-ia?label=version&sort=semver)
+![License](https://img.shields.io/github/license/Kisai-DG-SLU/culture-ia)
 ![Python Version](https://img.shields.io/badge/python-3.10-blue)
-![License](https://img.shields.io/badge/license-Proprietary-red)
 ![Environment](https://img.shields.io/badge/environment-conda-green)
 [![Coverage](https://img.shields.io/badge/coverage-75%25-green)](https://kisai-dg-slu.github.io/culture-ia/)
 
