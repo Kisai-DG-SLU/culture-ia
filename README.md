@@ -91,7 +91,7 @@ Documentation interactive Swagger.
 *   **Qualité** :
     *   **CI/CD** : GitHub Actions (basé sur Miniconda).
     *   **Pre-commit** : Black, Pylint.
-    *   **Tests** : Pytest (> 80% coverage).
+    *   **Tests** : Pytest (> 75% coverage).
 
 ## 📂 Structure du Projet
 
