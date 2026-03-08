@@ -11,3 +11,7 @@ data/
 _bmad-output/
 .env
 .DS_Store
+.venv_conda/
+venv/
+.venv/
+__pycache__/
