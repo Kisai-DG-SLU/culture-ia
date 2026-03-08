@@ -5,8 +5,9 @@ __pycache__/
 .DS_Store
 .coverage
 htmlcov/
+pixi.lock
+.pixi/
 data/
-.venv/
-.venv_conda/
-coverage.xml
-docs/private/
+_bmad-output/
+.env
+.DS_Store

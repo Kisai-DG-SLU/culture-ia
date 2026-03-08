@@ -8,20 +8,20 @@ ifeq ($(VENV_CONDA_EXISTS), 1)
 	VENV_DIR = .venv_conda
 	PYTHON = $(VENV_DIR)/bin/python
 	PIP = $(VENV_DIR)/bin/pip
-	PYTEST = $(VENV_DIR)/bin/pytest
+	PYTEST = $(VENV_DIR)/bin/pixi run pytest
 	BLACK = $(VENV_DIR)/bin/black
 	PYLINT = $(VENV_DIR)/bin/pylint
 else ifeq ($(VENV_PIP_EXISTS), 1)
 	VENV_DIR = .venv
 	PYTHON = $(VENV_DIR)/bin/python
 	PIP = $(VENV_DIR)/bin/pip
-	PYTEST = $(VENV_DIR)/bin/pytest
+	PYTEST = $(VENV_DIR)/bin/pixi run pytest
 	BLACK = $(VENV_DIR)/bin/black
 	PYLINT = $(VENV_DIR)/bin/pylint
 else
 	PYTHON = python
 	PIP = pip
-	PYTEST = pytest
+	PYTEST = pixi run pytest
 	BLACK = black
 	PYLINT = pylint
 endif
@@ -57,3 +57,8 @@ docker-run:
 
 docker-stop:
 	docker stop culture-ia-container || true
+
+# --- BMAD ---
+chat:
+	@zsh -ic "gemini"
+
