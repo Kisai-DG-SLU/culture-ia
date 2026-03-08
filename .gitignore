@@ -15,3 +15,9 @@ _bmad-output/
 venv/
 .venv/
 __pycache__/
+
+.venv_conda
+venv
+.venv
+__pycache__
+.ipynb_checkpoints
